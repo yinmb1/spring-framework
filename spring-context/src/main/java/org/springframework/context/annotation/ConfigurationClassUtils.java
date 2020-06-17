@@ -92,6 +92,10 @@ abstract class ConfigurationClassUtils {
 		AnnotationMetadata metadata;
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
+			// 符合这个判断的就是一个配置类，比如AppConfig，但是一个普通的Component其实也是一个配置类
+			// 因为可以在Component内使用@Bean也可以定义一个Bean, 而对于一个普通的Component他的bd类型是ScannedGenericBeanDefinition
+			// 是符合beanDef instanceof AnnotatedBeanDefinition这个判断的
+
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}

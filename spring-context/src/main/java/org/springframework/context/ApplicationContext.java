@@ -55,6 +55,16 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.core.io.ResourceLoader
  */
+
+/**
+ *  ApplicationContext 不等于 BeanFactory
+ *  ApplicationContext 只是继承了BeanFactory, 拥有了Bean工厂的功能
+ *  同时，ApplicationContext 还基础了其他接口，比如
+ *  EnvironmentCapable：表示可以获取容器当前运行的环境
+ *  MessageSource：表示可以用于国际化
+ *  ApplicationEventPublisher：表示拥有事件发布功能
+ *  ResourcePatternResolver：表示拥有加载资源文件功能
+ */
 public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
 

@@ -280,6 +280,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
+		// 根据ComponentScan注解所知道的包路径进行扫描，扫描得出被@Component注解的了class所对应的ScannedGenericBeanDefinition
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
@@ -294,6 +295,7 @@ class ConfigurationClassParser {
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
 					}
+					// 再判断一下，当前ScannedGenericBeanDefinition中是否同时也是一个配置类，比如@Bean
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
@@ -302,6 +304,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @Import annotations
+		// 处理appconfig上的@Import注解，继承了@Import注解的也算，比如@MapperScan
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
 		// Process any @ImportResource annotations
@@ -573,6 +576,8 @@ class ConfigurationClassParser {
 					else if (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
+						// 如果@Import注解中的类实现了ImportBeanDefinitionRegistrar接口，就把该类的实例放入importBeanDefinitionRegistrars中，
+						// 后面再执行该实例的registerBeanDefinitions方法
 						Class<?> candidateClass = candidate.loadClass();
 						ImportBeanDefinitionRegistrar registrar =
 								ParserStrategyUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class,

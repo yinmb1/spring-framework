@@ -30,6 +30,7 @@ ext {
 	}
 }
 
+
 configure(allprojects) { project ->
 	apply plugin: "io.spring.dependency-management"
 

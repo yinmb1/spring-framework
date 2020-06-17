@@ -148,6 +148,14 @@ public abstract class AnnotationConfigUtils {
 	public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
 
+		// 向BeanFactory中注册5个基础的BeanDefinition
+		// 1.ConfigurationClassPostProcessor
+		// 2.AutowiredAnnotationBeanPostProcessor
+		// 3.CommonAnnotationBeanPostProcessor
+		// 4.EventListenerMethodProcessor
+		// 5.DefaultEventListenerFactory
+
+
 		DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);
 		if (beanFactory != null) {
 			if (!(beanFactory.getDependencyComparator() instanceof AnnotationAwareOrderComparator)) {

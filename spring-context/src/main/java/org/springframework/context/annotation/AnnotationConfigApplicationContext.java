@@ -63,7 +63,14 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
+		// 再执行这个构造方法之前，会先执行父类的构造方法，会初始化一个beanFactory = new DefaultListableBeanFactory()
+
+		// 生成5个原始的beanDefinition
+		// 后面会生成对应的bean，然后做特定的事情
 		this.reader = new AnnotatedBeanDefinitionReader(this);
+		// AnnotatedBeanDefinitionReader负责将某个类注册为beanDefinition
+		// reader.register(AppConfig.class);
+
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -84,8 +91,15 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		// 初始化AnnotatedBeanDefinitionReader 和 ClassPathBeanDefinitionScanner
+		// AnnotatedBeanDefinitionReader会生成5个基础的BeanDefinition
+		// ClassPathBeanDefinitionScanner
 		this();
+		// 先把AppConfig类注册为一个AnnotatedGenericBeanDefinition
 		register(componentClasses);
+
+		// 到此为止AnnotationConfigApplicationContext有六个BeanDefinition
+
 		refresh();
 	}
 

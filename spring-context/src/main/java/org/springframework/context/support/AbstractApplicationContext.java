@@ -57,6 +57,7 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -493,6 +494,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * to the internal BeanFactory.
 	 */
 	public List<BeanFactoryPostProcessor> getBeanFactoryPostProcessors() {
+		// beanFactoryPostProcessors中的内容可以通过AnnotationConfigApplicationContext的addBeanFactoryPostProcessor方法添加
 		return this.beanFactoryPostProcessors;
 	}
 
@@ -522,16 +524,27 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			// 向BeanFactory中添加一些默认的BeanPostProcessor和Bean
+			// 1.ApplicationContextAwareProcessor
+			// 2.ApplicationListenerDetector
+			// 3.LoadTimeWeaverAwareProcessor
+
+			// 1.beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
+			// 2.beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
+			// 3.beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				// 子类对BeanFactory进行处理
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				// 执行已经被添加到Context中的BeanFactoryPostProcessor
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 注册BeanPostProcessor
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -541,15 +554,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				// 执行子类的onRefresh方法
 				onRefresh();
 
 				// Check for listener beans and register them.
+				// 注册Listener
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// 实例化非懒加载的bean
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				// 发布事件
 				finishRefresh();
 			}
 
@@ -872,9 +889,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		// 冻结所有已经注册了的BeanDefinition，后续不能被修改和处理
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		// 实例化所有非懒加载的bean
 		beanFactory.preInstantiateSingletons();
 	}
 

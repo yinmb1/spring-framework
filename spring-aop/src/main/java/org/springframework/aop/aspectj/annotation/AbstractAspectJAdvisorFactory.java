@@ -77,6 +77,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	 */
 	@Override
 	public boolean isAspect(Class<?> clazz) {
+		// 类上是否存在Aspect注解
 		return (hasAspectAnnotation(clazz) && !compiledByAjc(clazz));
 	}
 
@@ -130,6 +131,8 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	@SuppressWarnings("unchecked")
 	@Nullable
 	protected static AspectJAnnotation<?> findAspectJAnnotationOnMethod(Method method) {
+		// 查看当前方法上是否存在Pointcut、Around, Before, After, AfterReturning, AfterThrowing注解
+		// 有其中一个就返回
 		for (Class<?> clazz : ASPECTJ_ANNOTATION_CLASSES) {
 			AspectJAnnotation<?> foundAnnotation = findAnnotation(method, (Class<Annotation>) clazz);
 			if (foundAnnotation != null) {

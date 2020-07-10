@@ -38,4 +38,5 @@ rootProject.children.each {project ->
 }
 include 'luban'
 include 'luban-spring'
+include 'luban-aop'
 

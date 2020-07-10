@@ -302,6 +302,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				if (candidateConstructors == null) {
 					Constructor<?>[] rawCandidates;
 					try {
+						// 拿到当前类所有的构造方法，如果没有写任何构造方法，这里会返回一个无参的构造方法
 						rawCandidates = beanClass.getDeclaredConstructors();
 					}
 					catch (Throwable ex) {
@@ -314,6 +315,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					Constructor<?> defaultConstructor = null;
 					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
 					int nonSyntheticConstructors = 0;
+					// 遍历所有的构造方法
 					for (Constructor<?> candidate : rawCandidates) {
 						if (!candidate.isSynthetic()) {
 							nonSyntheticConstructors++;
@@ -321,8 +323,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 						else if (primaryConstructor != null) {
 							continue;
 						}
+
+						// 查看该构造方法上是否存在@Autowired注解
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);
 						if (ann == null) {
+							// 如果当前类是cglib生成的代理类，则获取期父类
 							Class<?> userClass = ClassUtils.getUserClass(beanClass);
 							if (userClass != beanClass) {
 								try {
@@ -335,13 +340,18 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								}
 							}
 						}
+						// 如果存在@Autowired注解
 						if (ann != null) {
+							// requiredConstructor表示程序员手动指明的要使用的哪个构造方法
+							// 所以如果有多个构造方法上都写了@Autowired注解就会报错，required位true的情况下
+							// 因为作为程序员你如果告诉Spring多个构造方法，那Spring也就不知道到底要使用哪一个了
 							if (requiredConstructor != null) {
 								throw new BeanCreationException(beanName,
 										"Invalid autowire-marked constructor: " + candidate +
 										". Found constructor with 'required' Autowired annotation already: " +
 										requiredConstructor);
 							}
+							// 查看@Autowired的required属性值，默认位true
 							boolean required = determineRequiredStatus(ann);
 							if (required) {
 								if (!candidates.isEmpty()) {
@@ -352,30 +362,42 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								}
 								requiredConstructor = candidate;
 							}
+							// candidates中存的是加了@Autowired注解的构造方法
 							candidates.add(candidate);
 						}
+						// 如果当前构造方法上不存在@Autowired，并且是无参构造方法
 						else if (candidate.getParameterCount() == 0) {
 							defaultConstructor = candidate;
 						}
 					}
+
+					// 如果有构造方法上添加了@Autowired
 					if (!candidates.isEmpty()) {
 						// Add default constructor to list of optional constructors, as fallback.
+						// 如果没有指定required为true的构造方法
 						if (requiredConstructor == null) {
 							if (defaultConstructor != null) {
+								// 那么就把无参的构造方法也添加进去
 								candidates.add(defaultConstructor);
 							}
+							// 如果没有指定required为true的构造方法，并且也没有无参的构造方法，并且只有一个构造方法
 							else if (candidates.size() == 1 && logger.isInfoEnabled()) {
+								// 给一个提示，没有无参的构造方法，然后又只有一个@Autowired(required=false)的构造方法
+								// 所以其实一定会用这个构造方法，所以打印一个日志，告诉程序员，你其实可以把required改为true
 								logger.info("Inconsistent constructor declaration on bean with name '" + beanName +
 										"': single autowire-marked constructor flagged as optional - " +
 										"this constructor is effectively required since there is no " +
 										"default constructor to fall back to: " + candidates.get(0));
 							}
 						}
+						// 如果有构造方法加上了@Autowired注解，那么就从这些构造方法中来决定出一个要使用的构造方法
 						candidateConstructors = candidates.toArray(new Constructor<?>[0]);
 					}
+					// 如果没有构造方法上添加了@Autowired注解，并且只有一个构造方法，并且该构造方法的参数个数大于0
 					else if (rawCandidates.length == 1 && rawCandidates[0].getParameterCount() > 0) {
 						candidateConstructors = new Constructor<?>[] {rawCandidates[0]};
 					}
+					// 如果没有构造方法上添加了@Autowired注解，并且有多个构造方法，并且有primaryConstructor
 					else if (nonSyntheticConstructors == 2 && primaryConstructor != null &&
 							defaultConstructor != null && !primaryConstructor.equals(defaultConstructor)) {
 						candidateConstructors = new Constructor<?>[] {primaryConstructor, defaultConstructor};
@@ -383,7 +405,9 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					else if (nonSyntheticConstructors == 1 && primaryConstructor != null) {
 						candidateConstructors = new Constructor<?>[] {primaryConstructor};
 					}
+					// 如果没有构造方法上添加了@Autowired注解，并且有多个构造方法，并且没有primaryConstructor
 					else {
+						// 返回一个空的Constructor数组，表示没有推断出来构造方法
 						candidateConstructors = new Constructor<?>[0];
 					}
 					this.candidateConstructorsCache.put(beanClass, candidateConstructors);

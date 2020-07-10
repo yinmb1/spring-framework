@@ -1,15 +1,20 @@
 package com.luban;
 
-import com.luban.service.AService;
-import com.luban.service.BService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class Test {
+
 	public static void main(String[] args) {
 
 		AnnotationConfigApplicationContext context =
-				new AnnotationConfigApplicationContext(AppConfig.class);
-		BService aService = context.getBean("BService", BService.class);
-		aService.test();
+				new AnnotationConfigApplicationContext(AppConfig.class);  //UserService的bean
+
+		System.out.println(context.getBean("a")); // 代理对象
+		System.out.println(context.getBean("a")); // 代理对象
+		System.out.println(context.getBean("a")); // 代理对象
+
+
+
+
 	}
 }

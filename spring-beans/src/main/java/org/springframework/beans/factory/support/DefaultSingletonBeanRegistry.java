@@ -158,6 +158,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+	// 这个方法是周瑜老师自己写了，为了验证循环依赖
+	protected void addEarlySingleton(String beanName, Object bean) {
+		synchronized (this.earlySingletonObjects) {
+			if (!this.earlySingletonObjects.containsKey(beanName)) {
+				this.earlySingletonObjects.put(beanName, bean);
+			}
+		}
+	}
+
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
@@ -175,18 +184,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		Object singletonObject = this.singletonObjects.get(beanName);
-
-		// 在获取一个单例时，如果没有在单例池中，但是发现这个单例正在创建过程中，那么就去earlySingletonObjects中拿
-		// 如果在earlySingletonObjects中也没有，就从singletonFactories中拿出创建实例的对象工厂ObjectFactory
-		// 执行对象工厂的getObject()方法生成一个实例，并把此实例放入earlySingletonObjects中,并移除singletonFactories中对应的对象工厂
-		// 从这里可以看出对象工厂ObjectFactory是一次性的
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
+				// 没有earlySingletonObjects会怎么样？
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {
+					// 为什么需要singletonFactories？
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
-						singletonObject = singletonFactory.getObject();
+						singletonObject = singletonFactory.getObject();  // 执行lambda AOP代理代理里面的原始对象
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);
 					}

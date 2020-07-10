@@ -1,14 +1,19 @@
 package com.luban;
 
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import com.luban.entity.A;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @ComponentScan("com.luban")
-@EnableAspectJAutoProxy
 public class AppConfig {
 
+
+	@Bean
+	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+	public A a() {
+		return new A();
+	}
 
 }

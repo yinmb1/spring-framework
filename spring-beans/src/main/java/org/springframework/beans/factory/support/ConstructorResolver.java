@@ -136,6 +136,7 @@ class ConstructorResolver {
 			argsToUse = explicitArgs;
 		}
 		else {
+			// 这里应该是看是否指定了构造方法的参数值
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
@@ -154,6 +155,7 @@ class ConstructorResolver {
 
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
+			// 可能是多个构造方法
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
 				Class<?> beanClass = mbd.getBeanClass();
@@ -168,8 +170,10 @@ class ConstructorResolver {
 				}
 			}
 
+			// 如果只有一个无参的构造方法
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
+				// 无参
 				if (uniqueCandidate.getParameterCount() == 0) {
 					synchronized (mbd.constructorArgumentLock) {
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
@@ -195,16 +199,16 @@ class ConstructorResolver {
 				resolvedValues = new ConstructorArgumentValues();
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
-
+			// 按构造方法的参数个数的多少降序排序，参数个数多的在前
 			AutowireUtils.sortConstructors(candidates);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
-
+			// 遍历构造方法
 			for (Constructor<?> candidate : candidates) {
-
+				// 当前构造方法的参数个数
 				int parameterCount = candidate.getParameterCount();
-
+				// 如果发现在bd中指定的构造方法参数值的个数大于当前构造方法的参数个数了，则break
 				if (constructorToUse != null && argsToUse != null && argsToUse.length > parameterCount) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
@@ -218,6 +222,7 @@ class ConstructorResolver {
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 				if (resolvedValues != null) {
 					try {
+						// 查看是否在构造方法上使用@ConstructorProperties注解来定义构造方法参数的名字
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, parameterCount);
 						if (paramNames == null) {
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
@@ -401,6 +406,7 @@ class ConstructorResolver {
 		boolean isStatic;
 
 		String factoryBeanName = mbd.getFactoryBeanName();
+		// 实例
 		if (factoryBeanName != null) {
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
@@ -413,6 +419,7 @@ class ConstructorResolver {
 			factoryClass = factoryBean.getClass();
 			isStatic = false;
 		}
+		// 静态
 		else {
 			// It's a static factory method on the bean class.
 			if (!mbd.hasBeanClass()) {

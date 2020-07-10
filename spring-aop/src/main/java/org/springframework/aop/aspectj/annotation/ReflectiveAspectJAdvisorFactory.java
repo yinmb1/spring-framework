@@ -136,6 +136,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 		}
 
 		// Find introduction fields.
+		// 处理DeclareParents注解
 		for (Field field : aspectClass.getDeclaredFields()) {
 			Advisor advisor = getDeclareParentsAdvisor(field);
 			if (advisor != null) {
@@ -150,6 +151,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 		final List<Method> methods = new ArrayList<>();
 		ReflectionUtils.doWithMethods(aspectClass, method -> {
 			// Exclude pointcuts
+			// 除开@Pointcut注解都拿到，作为dvisorMethods
 			if (AnnotationUtils.getAnnotation(method, Pointcut.class) == null) {
 				methods.add(method);
 			}
@@ -188,25 +190,30 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 			int declarationOrderInAspect, String aspectName) {
 
 		validate(aspectInstanceFactory.getAspectMetadata().getAspectClass());
-
+		// 得到当前candidateAdviceMethod方法上的所定义的expression表达式，也就是切点
 		AspectJExpressionPointcut expressionPointcut = getPointcut(
 				candidateAdviceMethod, aspectInstanceFactory.getAspectMetadata().getAspectClass());
 		if (expressionPointcut == null) {
 			return null;
 		}
-
+		// 构造一个Advisor，包含：
+		// expressionPointcut：@Around等注解中所定义的表达式
+		// candidateAdviceMethod：@Around等注解所注解的方法
 		return new InstantiationModelAwarePointcutAdvisorImpl(expressionPointcut, candidateAdviceMethod,
 				this, aspectInstanceFactory, declarationOrderInAspect, aspectName);
 	}
 
 	@Nullable
+	// 该方法返回的是表达式，表示：表达式为pointcut,
 	private AspectJExpressionPointcut getPointcut(Method candidateAdviceMethod, Class<?> candidateAspectClass) {
+		// 获取当前方法上是否存在Pointcut、Around, Before, After, AfterReturning, AfterThrowing注解
 		AspectJAnnotation<?> aspectJAnnotation =
 				AbstractAspectJAdvisorFactory.findAspectJAnnotationOnMethod(candidateAdviceMethod);
 		if (aspectJAnnotation == null) {
 			return null;
 		}
 
+		// 注解中所配置的表达式
 		AspectJExpressionPointcut ajexp =
 				new AspectJExpressionPointcut(candidateAspectClass, new String[0], new Class<?>[0]);
 		ajexp.setExpression(aspectJAnnotation.getPointcutExpression());

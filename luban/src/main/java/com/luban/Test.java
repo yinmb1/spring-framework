@@ -1,5 +1,6 @@
 package com.luban;
 
+import com.luban.entity.B;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class Test {
@@ -9,9 +10,7 @@ public class Test {
 		AnnotationConfigApplicationContext context =
 				new AnnotationConfigApplicationContext(AppConfig.class);  //UserService的bean
 
-		System.out.println(context.getBean("a")); // 代理对象
-		System.out.println(context.getBean("a")); // 代理对象
-		System.out.println(context.getBean("a")); // 代理对象
+		System.out.println(context.getBean("userService", new B())); // 代理对象
 
 
 

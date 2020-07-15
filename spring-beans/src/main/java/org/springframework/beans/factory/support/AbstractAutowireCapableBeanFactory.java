@@ -1242,14 +1242,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Candidate constructors for autowiring?
-		// 利用beanPostProcessor来选取构造方法
-		// 推断出来可用的构造方法（添加了@Autowired(required=false)注解的构造方法+无参的构造方法，可以有多个, 只能有一个required=true）
-		// 注意，如果存在多个构造方法，但是都没有添加@Autowired注解的话，则此处返回的null
-		// 注意，如果只存在一个构造方法，就算也没有添加@Autowired注解，那么则返回此构造方法
+		// 利用beanPostProcessor来选取构造方法，如果返回值（ctors）不为空，则表示利用beanPostProcessor找到了候选的构造方法，那么则进行自动推断
+		// 如果当前bd是构造方法自动注入，那么也进行自动推断
+		// 如果当前bd中存在了构造方法参数值，那么也进行自动推断
+		// 如果是在getBean时指定了args, 那么也进行自动推断
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
-			// 从ctors中选择其中一个构造方法得到一个对象
+			// 从ctors中自动选择一个构造方法
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
@@ -1405,7 +1405,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected BeanWrapper autowireConstructor(
 			String beanName, RootBeanDefinition mbd, @Nullable Constructor<?>[] ctors, @Nullable Object[] explicitArgs) {
-
+		// 利用构造方法解析器来自动选择构造方法
 		return new ConstructorResolver(this).autowireConstructor(beanName, mbd, ctors, explicitArgs);
 	}
 

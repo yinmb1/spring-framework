@@ -311,13 +311,18 @@ public class MethodInvoker {
 				return Integer.MAX_VALUE;
 			}
 			if (args[i] != null) {
+				// 当前参数类型
 				Class<?> paramType = paramTypes[i];
+				// 对应的参数值的父类
 				Class<?> superClass = args[i].getClass().getSuperclass();
+				// 遍历父类
 				while (superClass != null) {
+					// 如果某个父类等于参数类型则解释，result+2
 					if (paramType.equals(superClass)) {
 						result = result + 2;
 						superClass = null;
 					}
+					// 如果paramType是superClass子类，那么result+2，继续找父类，所以层级越多result越大
 					else if (ClassUtils.isAssignable(paramType, superClass)) {
 						result = result + 2;
 						superClass = superClass.getSuperclass();
@@ -326,11 +331,13 @@ public class MethodInvoker {
 						superClass = null;
 					}
 				}
+				// 遍历完父类之后，如果参数类型是一个接口，则result+1
 				if (paramType.isInterface()) {
 					result = result + 1;
 				}
 			}
 		}
+		// 最后得出一个分数
 		return result;
 	}
 

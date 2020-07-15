@@ -22,5 +22,5 @@
 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
 	</bean>
 
-	<bean id="userService" class="com.luban.service.AService"/>
+	<bean id="userService" class="com.luban.service.UserService"/>
 </beans>

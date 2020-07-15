@@ -1185,9 +1185,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #instantiateBean
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
+		// 创建一个bean实例(返回一个原始对象)
+
 		// Make sure bean class is actually resolved at this point.
-		// 1.获取这个bean的class属性，确保beanDefinition中beanClass属性已经完成解析
-		// 我们通过xml从<bean>标签中解析出来的class属性在刚刚开始的时候必定是个字符串
+		// 1. 得到bean的class，并验证class的访问权限是不是public
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
@@ -1195,18 +1196,24 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
 
-		// 2.通过beanDefinition中的Supplier实例化这个bean
+		// 2. 这是Spring提供给开发者的扩展点
+		// 如果我们要自己来实现创建对象的过程, 那么就可以提供一个Supplier的实现类,
+		// 当一个BeanDefinition中存在一个Supplier实现类的时候, Spring就利用这个类的get方法来获取实例,
+		// 而不再走Spring创建对象的逻辑
 		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 		if (instanceSupplier != null) {
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
-		// 3.通过FactoryMethod实例化这个bean
+		// 3.通过factoryMethod实例化这个bean
+		// factorMethod这个名称在xml中还是比较常见的, 即通过工厂方法来创建bean对象
+		// 如果一个bean对象是由@Bean注解创建的, 那么该对象就会走instantiateUsingFactoryMethod方法来创建的
 		if (mbd.getFactoryMethodName() != null) {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
 
 		// Shortcut when re-creating the same bean...
+		// 4. 重新创建对象时的快捷方式（多例bean时就是重新创建）
 		// 4.下面这段代码都是在通过构造函数实例化这个Bean,分两种情况，
 		// 一种是通过默认的无参构造，
 		// 一种是通过推断出来的构造函数
@@ -1214,7 +1221,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean autowireNecessary = false;
 		if (args == null) {
 			synchronized (mbd.constructorArgumentLock) {
-				// 已经找到了创建对象的方式，要么是构造方法，要么是工厂方法
+				// 只要推断出来过构造方法，就会把这个构造方法缓存在resolvedConstructorOrFactoryMethod属性上
+				// 下次重复创建对象时，就不用再次进行推断了，直接用就可以了
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
 					resolved = true;
 					autowireNecessary = mbd.constructorArgumentsResolved;
@@ -1222,21 +1230,26 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 		if (resolved) {
+			// resolved为true，表示当前bean的构造方法已经确定出来了
+			// autowireNecessary表示
 			if (autowireNecessary) {
 				return autowireConstructor(beanName, mbd, null, null);
 			}
 			else {
+				// 用无参的构造方法来实例化bean
 				return instantiateBean(beanName, mbd);
 			}
 		}
 
 		// Candidate constructors for autowiring?
+		// 利用beanPostProcessor来选取构造方法
 		// 推断出来可用的构造方法（添加了@Autowired(required=false)注解的构造方法+无参的构造方法，可以有多个, 只能有一个required=true）
 		// 注意，如果存在多个构造方法，但是都没有添加@Autowired注解的话，则此处返回的null
 		// 注意，如果只存在一个构造方法，就算也没有添加@Autowired注解，那么则返回此构造方法
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
+			// 从ctors中选择其中一个构造方法得到一个对象
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
@@ -1248,7 +1261,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// No special handling: simply use no-arg constructor.
-		// 没有特殊处理的情况下，使用无参的构造方法来实例化bean
+		// 用无参的构造方法来实例化bean
 		return instantiateBean(beanName, mbd);
 	}
 

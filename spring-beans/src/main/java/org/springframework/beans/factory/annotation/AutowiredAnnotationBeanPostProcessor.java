@@ -261,10 +261,12 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 		// Let's check for lookup methods here...
 		if (!this.lookupMethodsChecked.contains(beanName)) {
+			// @Lookup注解的使用 https://www.jianshu.com/p/fc574881e3a2
 			if (AnnotationUtils.isCandidateClass(beanClass, Lookup.class)) {
 				try {
 					Class<?> targetClass = beanClass;
 					do {
+						// 遍历当前beanClass中所有加了Lookup注解的方法，并且把这些方法的信息封装为LookupOverride对象加载mbd中
 						ReflectionUtils.doWithLocalMethods(targetClass, method -> {
 							Lookup lookup = method.getAnnotation(Lookup.class);
 							if (lookup != null) {
@@ -290,15 +292,19 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					throw new BeanCreationException(beanName, "Lookup method resolution failed", ex);
 				}
 			}
+			// lookupMethodsChecked是一个set，用来记录哪些bean的@lookup注解被解析了，下一次就不用解析了
 			this.lookupMethodsChecked.add(beanName);
 		}
 
 		// Quick check on the concurrent map first, with minimal locking.
+		// 先检查candidateConstructorsCache中是否缓存了当前bean中可用的构造方法
 		Constructor<?>[] candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 		if (candidateConstructors == null) {
 			// Fully synchronized resolution now...
 			synchronized (this.candidateConstructorsCache) {
 				candidateConstructors = this.candidateConstructorsCache.get(beanClass);
+
+				// 如果没有筛选过构造方法，就开始筛选
 				if (candidateConstructors == null) {
 					Constructor<?>[] rawCandidates;
 					try {
@@ -310,13 +316,21 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								"Resolution of declared constructors on bean Class [" + beanClass.getName() +
 								"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 					}
+
+					// candidates 就是用来存储所有被筛选出来的构造方法,其实可以认为, 就是把所有@Autowired注解标注的方法放到里面, 但是还多放了一个默认构造方法
 					List<Constructor<?>> candidates = new ArrayList<>(rawCandidates.length);
+					// requiredConstructor表示@Autowired标注并且required为true的构造方法, 因为只允许出现一个这样的构造方法, 所以当这个变量存在值后, 又出现了一个相同情况的构造方法的话, Spring就会抛出一个错误
 					Constructor<?> requiredConstructor = null;
+					// defaultConstructor用来保存默认构造方法
 					Constructor<?> defaultConstructor = null;
+
+					// 如果是kotlin的类才起效，如果是java中的类则直接返回null
 					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
 					int nonSyntheticConstructors = 0;
+
 					// 遍历所有的构造方法
 					for (Constructor<?> candidate : rawCandidates) {
+						// nonSyntheticConstructors这个变量是和primaryConstructor != null一起使用的，所以也不用管
 						if (!candidate.isSynthetic()) {
 							nonSyntheticConstructors++;
 						}
@@ -324,7 +338,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 							continue;
 						}
 
-						// 查看该构造方法上是否存在@Autowired注解
+						// 查看该构造方法上是否存在@Autowired注解，或者看代理类的父类中对应的构造方法上是否存在@Autowired注解
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);
 						if (ann == null) {
 							// 如果当前类是cglib生成的代理类，则获取期父类
@@ -340,7 +354,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								}
 							}
 						}
-						// 如果存在@Autowired注解
+
+						// 如果构造方法上存在@Autowired注解
 						if (ann != null) {
 							// requiredConstructor表示程序员手动指明的要使用的哪个构造方法
 							// 所以如果有多个构造方法上都写了@Autowired注解就会报错，required位true的情况下
@@ -365,16 +380,17 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 							// candidates中存的是加了@Autowired注解的构造方法
 							candidates.add(candidate);
 						}
-						// 如果当前构造方法上不存在@Autowired，并且是无参构造方法
+						// 如果当前构造方法上不存在@Autowired，并且是无参构造方法，则记录一下该无参构造方法
+						// 所以我们可以方法，在遍历构造方法时，其实只关心无参构造方法和加了@Autowired注解的构造方法
 						else if (candidate.getParameterCount() == 0) {
 							defaultConstructor = candidate;
 						}
 					}
 
-					// 如果有构造方法上添加了@Autowired
+					// 如果存在添加了@Autowired的构造方法
 					if (!candidates.isEmpty()) {
 						// Add default constructor to list of optional constructors, as fallback.
-						// 如果没有指定required为true的构造方法
+						// 如果没有指定required为true的构造方法，那么就把构造方法添加到candidates中去，后续一起进行推断
 						if (requiredConstructor == null) {
 							if (defaultConstructor != null) {
 								// 那么就把无参的构造方法也添加进去
@@ -390,14 +406,17 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 										"default constructor to fall back to: " + candidates.get(0));
 							}
 						}
-						// 如果有构造方法加上了@Autowired注解，那么就从这些构造方法中来决定出一个要使用的构造方法
+
+						// candidateConstructors就是当前方法的返回值
+						// 把candidates方法，两种情况，要么只有一个@Autowired(required=true)的构造方法，要么多个@Autowired(required=false)+一个无参构造方法
 						candidateConstructors = candidates.toArray(new Constructor<?>[0]);
 					}
-					// 如果没有构造方法上添加了@Autowired注解，并且只有一个构造方法，并且该构造方法的参数个数大于0
+					// 如果candidates为空，表示没有构造方法上添加了@Autowired注解，并且只有一个构造方法，并且该构造方法的参数个数大于0
+					// 那么表示只有一个构造方法可用，直接方法
 					else if (rawCandidates.length == 1 && rawCandidates[0].getParameterCount() > 0) {
 						candidateConstructors = new Constructor<?>[] {rawCandidates[0]};
 					}
-					// 如果没有构造方法上添加了@Autowired注解，并且有多个构造方法，并且有primaryConstructor
+					// primaryConstructor != null 不管
 					else if (nonSyntheticConstructors == 2 && primaryConstructor != null &&
 							defaultConstructor != null && !primaryConstructor.equals(defaultConstructor)) {
 						candidateConstructors = new Constructor<?>[] {primaryConstructor, defaultConstructor};
@@ -414,6 +433,23 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				}
 			}
 		}
+
+		// 总结一下determineCandidateConstructors这个方法到底在做什么？
+		// 首先，这个方法是BeanPostProcessor中的逻辑，所以它是一个插件，可有可无，比如现在这个类叫做AutowiredAnnotationBeanPostProcessor
+		// 那么很明显，这个是处理@Autowired注解的，所以我们可以理解为这个方法是在处理构造方法上的@Autowired注解
+		// 如果这么理解的话，可以看出来，这个方法主要作用并不是“推断”，因为我们所理解的推断是“推理决断”，从多个选择一个
+		// 所以我们就可以把当前这个方法里面处理构造方法上的Autowired
+		// 那么这个方法的功能，我们就好理解了：
+		// 1. 只能有一个@Autowired(required=true)的构造方法，有多个会报错，如果是这种情况，那么就应该这个构造方法来实例化对象
+		// 2. 可以有多个@Autowired(required=false)的构造方法，如果是这种情况，那么还不确定到底应该用哪个构造方法来实例化对象，
+		// 所以，如果是这种情况，我们还需要把无参构造方法加到candidateConstructors集合中，一起作为候选构造方法
+		// 3. 如果没有@Autowired的构造方法，但是如果本来只有一个有参构造方法，则也表明了只有这个构造方法可用
+		// 4. 如果没有@Autowired的构造方法，并且有多个构造方法，则返回空
+
+		// 再总结一下，这个方法做一件事情，就是去找到，到底哪些构造方法是可用的
+		// 1. 程序员通过@Autowired注解指定的构造方法
+		// 2. 在没有指定时，如果这个类只有一个构造方法，那么就应该用这个构造方法
+		// 3. 否则，当前方法也不知道应该用哪个构造方法
 		return (candidateConstructors.length > 0 ? candidateConstructors : null);
 	}
 

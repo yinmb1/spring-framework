@@ -13,10 +13,10 @@ import java.sql.Connection;
 public class LubanAspect {
 
 	// 申明父类 AService的父类为SuperMan，所以产生的AService的代理对象就拥有了SuperMan中的方法
-	@DeclareParents(value = "com.luban.service.AService", defaultImpl = SuperMan.class)
+	@DeclareParents(value = "com.luban.service.UserService", defaultImpl = SuperMan.class)
 	private Man xxx;
 
-	@Around("execution(* com.luban.service.AService.test())")
+	@Around("execution(* com.luban.service.UserService.test())")
 	public String invoke(ProceedingJoinPoint point) {
 
 		try {

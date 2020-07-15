@@ -204,11 +204,14 @@ class ConstructorResolver {
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
-			// 遍历构造方法
+
+			// 遍历构造方法，找到一个最合适的(贪婪)
+			// 先看参数列表最长的构造方法，根据每个参数的参数类型和参数名去找bean
 			for (Constructor<?> candidate : candidates) {
 				// 当前构造方法的参数个数
 				int parameterCount = candidate.getParameterCount();
-				// 如果发现在bd中指定的构造方法参数值的个数大于当前构造方法的参数个数了，则break
+				// 如果已经找到一个合适的构造方法了，并且该参数个数大于当前构造方法的参数个数
+				// 如果是参数个数相等的话，则继续判断当前构造方法是不是比之前的那个更合适
 				if (constructorToUse != null && argsToUse != null && argsToUse.length > parameterCount) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
@@ -222,6 +225,7 @@ class ConstructorResolver {
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 				if (resolvedValues != null) {
 					try {
+						// 获取参数名
 						// 查看是否在构造方法上使用@ConstructorProperties注解来定义构造方法参数的名字
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, parameterCount);
 						if (paramNames == null) {
@@ -230,10 +234,12 @@ class ConstructorResolver {
 								paramNames = pnd.getParameterNames(candidate);
 							}
 						}
+						// 根据当前构造方法的参数类型和参数名从beanFactory中得到bean作为参数值
 						argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw, paramTypes, paramNames,
 								getUserDeclaredConstructor(candidate), autowiring, candidates.length == 1);
 					}
 					catch (UnsatisfiedDependencyException ex) {
+						// 如果找不到对应的bean，也不会直接报错，只能证明当前遍历到的构造方法不能用
 						if (logger.isTraceEnabled()) {
 							logger.trace("Ignoring constructor [" + candidate + "] of bean '" + beanName + "': " + ex);
 						}
@@ -256,6 +262,7 @@ class ConstructorResolver {
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
+				// 从诸多构造方法中找到typeDiffWeight最小的那一个
 				if (typeDiffWeight < minTypeDiffWeight) {
 					constructorToUse = candidate;
 					argsHolderToUse = argsHolder;
@@ -270,6 +277,7 @@ class ConstructorResolver {
 					}
 					ambiguousConstructors.add(candidate);
 				}
+				// 循环结束
 			}
 
 			if (constructorToUse == null) {
@@ -723,6 +731,7 @@ class ConstructorResolver {
 	/**
 	 * Create an array of arguments to invoke a constructor or factory method,
 	 * given the resolved constructor argument values.
+	 * 得到一个参数数组，用来去执行构成方法或工厂方法
 	 */
 	private ArgumentsHolder createArgumentArray(
 			String beanName, RootBeanDefinition mbd, @Nullable ConstructorArgumentValues resolvedValues,
@@ -731,7 +740,7 @@ class ConstructorResolver {
 
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
-
+		// 根据参数类型的个数初始化出来对应的ArgumentsHolder
 		ArgumentsHolder args = new ArgumentsHolder(paramTypes.length);
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
@@ -793,6 +802,7 @@ class ConstructorResolver {
 							"] - did you specify the correct bean references as arguments?");
 				}
 				try {
+					// 得到一个参数值，里面会调用beanFactory.resolveDependency得到一个bean
 					Object autowiredArgument = resolveAutowiredArgument(
 							methodParam, beanName, autowiredBeanNames, converter, fallback);
 					args.rawArguments[paramIndex] = autowiredArgument;
@@ -889,6 +899,7 @@ class ConstructorResolver {
 			return injectionPoint;
 		}
 		try {
+			// 调用resolveDependency根据paramType和paramName得到一个bean对象
 			return this.beanFactory.resolveDependency(
 					new DependencyDescriptor(param, true), beanName, autowiredBeanNames, typeConverter);
 		}

@@ -92,14 +92,15 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
 		// 初始化AnnotatedBeanDefinitionReader 和 ClassPathBeanDefinitionScanner
-		// AnnotatedBeanDefinitionReader会生成5个基础的BeanDefinition
-		// ClassPathBeanDefinitionScanner
+		// 实际上reader和scanner二者用其一就好了，两者都是在Spring启动之处注册BeanDefinition
+		// 比如当前这个类，调用register方法实际上就是利用的reader去注册一个componentClasses对应的beanDefinition
+		// 而我们可以另外一个构造方法AnnotationConfigApplicationContext(String... basePackages),这个构造方法里使用的是scanner去扫描包路径得到BeanDefinition
 		this();
-		// 先把AppConfig类注册为一个AnnotatedGenericBeanDefinition
+		// 把AppConfig类注册为一个AnnotatedGenericBeanDefinition到reader中
 		register(componentClasses);
 
-		// 到此为止AnnotationConfigApplicationContext有六个BeanDefinition
-
+		// 在Spring启动到这里时，Spring中已经存在了一些BeanDefinition了，注意，不是Bean
+		// 刷新我们可以理解为，去解析这个BeanDefinition，因为这里的每个BeanDefinition都代表不同的意义，所做的事情也不同
 		refresh();
 	}
 

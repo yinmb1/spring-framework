@@ -1433,6 +1433,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// state of the bean before properties are set. This can be used, for example,
 		// to support styles of field injection.
 		// 可以提供InstantiationAwareBeanPostProcessor，控制对象的属性注入
+		// 我们可以自己写一个InstantiationAwareBeanPostProcessor，然后重写postProcessAfterInstantiation方法返回false,那么则不会进行属性填充了
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
@@ -1463,8 +1464,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				autowireByType(beanName, mbd, bw, newPvs);
 			}
 			pvs = newPvs;
+
+			// 总结一下
+			// 其实就是Spring自动的根据某个类中的set方法来找bean，byName就是根据某个set方法所对应的属性名去找bean
+			// byType，就是根据某个set方法的参数类型去找bean
+			// 注意，执行完这里的代码之后，这是把属性以及找到的值存在了pvs里面，并没有完成反射赋值
 		}
 
+		// 执行完了Spring的自动注入之后，就开始解析@Autowired
 		boolean hasInstAwareBpps = hasInstantiationAwareBeanPostProcessors();
 		boolean needsDepCheck = (mbd.getDependencyCheck() != AbstractBeanDefinition.DEPENDENCY_CHECK_NONE);
 
@@ -1477,7 +1484,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 
-					// 得到属性值
+					// 调用BeanPostProcessor分别解析@Autowired、@Resource、@Value，得到属性值
 					PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 
 					if (pvsToUse == null) {
@@ -1518,10 +1525,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected void autowireByName(
 			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
 
-		// 遍历类
+		// 遍历类中的属性，排除已经在mbd中设置了值的属性
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
 			if (containsBean(propertyName)) {
+				// 根据属性名去找bean，这就是byName
 				Object bean = getBean(propertyName);
 				// 给属性赋值
 				pvs.add(propertyName, bean);
@@ -1575,7 +1583,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					boolean eager = !(bw.getWrappedInstance() instanceof PriorityOrdered);
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
 
-					// 根据类型找bean
+					// 根据类型找bean，这就是byType
 					Object autowiredArgument = resolveDependency(desc, beanName, autowiredBeanNames, converter);
 					if (autowiredArgument != null) {
 						pvs.add(propertyName, autowiredArgument);
@@ -1610,7 +1618,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Set<String> result = new TreeSet<>();
 		PropertyValues pvs = mbd.getPropertyValues();
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
+
+		// 遍历bean类里所有的属性
 		for (PropertyDescriptor pd : pds) {
+			// 属性有set方法，并且pvs中没有包括当前属性
 			if (pd.getWriteMethod() != null && !isExcludedFromDependencyCheck(pd) && !pvs.contains(pd.getName()) &&
 					!BeanUtils.isSimpleProperty(pd.getPropertyType())) {
 				result.add(pd.getName());

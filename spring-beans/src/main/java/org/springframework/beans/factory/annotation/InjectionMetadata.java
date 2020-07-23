@@ -116,6 +116,7 @@ public class InjectionMetadata {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				// element可能是Method，也可能是Field
 				element.inject(target, beanName, pvs);
 			}
 		}

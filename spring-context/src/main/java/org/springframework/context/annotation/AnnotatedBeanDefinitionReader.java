@@ -48,12 +48,16 @@ import org.springframework.util.Assert;
  */
 public class AnnotatedBeanDefinitionReader {
 
+	// 表示Reader把BeanDefinition注册到registry中，其实就是AnnotationConfigApplicationContext
 	private final BeanDefinitionRegistry registry;
 
+	// BeanName生成器
 	private BeanNameGenerator beanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
+	// @Scope注解解析器，解析之后得到Scope注解中的元信息
 	private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
+	// @Conditional注解判断器，它的作用是按照指定的条件进行判断，满足条件才向容器注册bean
 	private ConditionEvaluator conditionEvaluator;
 
 
@@ -68,6 +72,7 @@ public class AnnotatedBeanDefinitionReader {
 	 * @see #setEnvironment(Environment)
 	 */
 	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
+		// Environment表示环境变量，包含了系统环境变量以及JVM启动参数
 		this(registry, getOrCreateEnvironment(registry));
 	}
 
@@ -85,6 +90,13 @@ public class AnnotatedBeanDefinitionReader {
 		Assert.notNull(environment, "Environment must not be null");
 		this.registry = registry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
+
+		// 构造Reader时就注册了一些Processor
+		// 1.ConfigurationClassPostProcessor
+		// 2.AutowiredAnnotationBeanPostProcessor
+		// 3.CommonAnnotationBeanPostProcessor
+		// 4.EventListenerMethodProcessor
+		// 5.DefaultEventListenerFactory
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 	}
 
@@ -245,21 +257,32 @@ public class AnnotatedBeanDefinitionReader {
 	 * @param customizers one or more callbacks for customizing the factory's
 	 * {@link BeanDefinition}, e.g. setting a lazy-init or primary flag
 	 * @since 5.0
+	 *
+	 * 这个方法是注册一个bean最底层的方法，参数很多
+	 * beanClass表示bean的类型
+	 * name表示bean的名字
+	 * qualifiers表示资格限定器，如果某个类上没有写@Lazy注解，但是在调用registerBean方法时传递了Lazy.class，那么则达到了一样的效果
+	 * supplier表示实例提供器，如果指定了supplier，那么bean的实例是有这个supplier生成的
+	 * customizers表示BeanDefinition自定义器，可以通过customizers对BeanDefinition进行自定义修改
 	 */
 	private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
 			@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
 			@Nullable BeanDefinitionCustomizer[] customizers) {
 
+		// 直接生成一个AnnotatedGenericBeanDefinition
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+		// 判断当前abd是否被标注了@Conditional注解，并判断是否符合所指定的条件，如果不符合，则跳过，不进行注册
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
 
+		// 设置supplier、scope属性，以及得到beanName
 		abd.setInstanceSupplier(supplier);
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 
+		// 获取Lazy、Primary、DependsOn、Role、Description注解信息并设置给abd
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
@@ -274,14 +297,19 @@ public class AnnotatedBeanDefinitionReader {
 				}
 			}
 		}
+		// 使用自定义器修改BeanDefinition
 		if (customizers != null) {
 			for (BeanDefinitionCustomizer customizer : customizers) {
 				customizer.customize(abd);
 			}
 		}
 
+		// BeanDefinition中是没有beanName的，BeanDefinitionHolder中持有了BeanDefinition,beanName,alias
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		// 解析Scope中的ProxyMode属性，默认为no，不生成代理对象
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+
+		// 注册到registry中
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 

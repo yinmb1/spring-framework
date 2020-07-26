@@ -1,6 +1,7 @@
 package com.luban;
 
-import com.luban.processor.LubanBeanFactoryPostProcessor;
+import com.luban.service.F;
+import com.luban.service.User;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class Test {
@@ -8,15 +9,10 @@ public class Test {
 	public static void main(String[] args) {
 
 		AnnotationConfigApplicationContext context =
-				new AnnotationConfigApplicationContext();
+				new AnnotationConfigApplicationContext(AppConfig.class);
 
-//		context.addBeanFactoryPostProcessor(new LubanBeanFactoryPostProcessor());
 
-		context.register(AppConfig.class);
-
-		context.refresh();
-
-		System.out.println(context.getBean("userService"));
+		System.out.println(context.getBean(F.class));
 
 	}
 }

@@ -1473,12 +1473,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				this, requiredType, true, descriptor.isEager());
 		Map<String, Object> result = new LinkedHashMap<>(candidateNames.length);
 
+		// 先从resolvableDependencies
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			Class<?> autowiringType = classObjectEntry.getKey();
+			// requiredType是autowiringType的子类
+			// 也就是，某个bean中的属性的类型是requiredType，是resolvableDependencies中的子类
 			if (autowiringType.isAssignableFrom(requiredType)) {
 				Object autowiringValue = classObjectEntry.getValue();
 				autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
 				if (requiredType.isInstance(autowiringValue)) {
+					// 把resolvableDependencies中保存的对象作为当前属性的一个候选者
 					result.put(ObjectUtils.identityToString(autowiringValue), autowiringValue);
 					break;
 				}

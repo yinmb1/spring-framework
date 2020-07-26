@@ -309,6 +309,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * @return a corresponding Set of autodetected bean definitions
 	 */
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
+		// 扫描Component，最笨的方法就是扫描basePackage下的所有类，看是否有@Component注解
+		// Spring提供了一种支持更快速扫描的机制，就是编译时直接创建一个静态的
+
 		if (this.componentsIndex != null && indexSupportsIncludeFilters()) {
 			return addCandidateComponentsFromIndex(this.componentsIndex, basePackage);
 		}
@@ -414,6 +417,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	}
 
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
+		// 扫描类，得到BeanDefinition
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
@@ -427,9 +431,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				}
 				if (resource.isReadable()) {
 					try {
+						// MetadataReader包含了对应class的元信息以及注解元信息
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 						// 判断一个类是不是Component
 						if (isCandidateComponent(metadataReader)) {
+							// 通过扫描@Component得到的BeanDefinition为ScannedGenericBeanDefinition
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 							sbd.setResource(resource);
 							sbd.setSource(resource);

@@ -1,12 +1,13 @@
 package com.luban;
 
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import com.luban.service.*;
+import org.springframework.context.annotation.*;
+import org.springframework.stereotype.Component;
 
-@Configuration
 @ComponentScan("com.luban")
-public class AppConfig {
+@EnableAspectJAutoProxy
+public class AppConfig extends LubanParent implements LubanInterface {
 
 
 }

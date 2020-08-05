@@ -541,13 +541,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
-				// 注册BeanPostProcessor，拦截bean的创建
+				// 注册可以拦截bean的创建的BeanPostProcessor，
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				// 这是ApplicationContext的messageSource
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				// 设置ApplicationContext的applicationEventMulticaster
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
@@ -1133,6 +1135,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
 		assertBeanFactoryActive();
+		// ApplicationContext当前所设置的具体的beanFactory
 		return getBeanFactory().getBean(name, requiredType);
 	}
 

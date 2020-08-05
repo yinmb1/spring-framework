@@ -16,7 +16,7 @@ public class LubanAspect {
 	@DeclareParents(value = "com.luban.service.AService", defaultImpl = SuperMan.class)
 	private Man xxx;
 
-	@Around("execution(* com.luban.service.UserService.test())")
+	@Around("execution(* com.luban.service.AService.test())")
 	public String invoke(ProceedingJoinPoint point) {
 
 		try {

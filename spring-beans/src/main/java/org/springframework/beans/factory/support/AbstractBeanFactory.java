@@ -154,9 +154,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
 
 	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered. */
+	// 标记BeanFactory中是否有InstantiationAwareBeanPostProcessor
 	private volatile boolean hasInstantiationAwareBeanPostProcessors;
 
 	/** Indicates whether any DestructionAwareBeanPostProcessors have been registered. */
+	// 标记BeanFactory中是否有DestructionAwareBeanPostProcessor
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
 
 	/** Map from scope identifier String to corresponding Scope. */
@@ -942,6 +944,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			this.hasDestructionAwareBeanPostProcessors = true;
 		}
 		// Add to end of list
+		// 添加在list的最后，到时候会按添加的顺序执行
 		this.beanPostProcessors.add(beanPostProcessor);
 	}
 
@@ -1504,7 +1507,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	@Nullable
 	private Class<?> doResolveBeanClass(RootBeanDefinition mbd, Class<?>... typesToMatch)
 			throws ClassNotFoundException {
+		// 根据mbd中的beanClassName来加载类并返回
 
+		// 拿到类加载器
 		ClassLoader beanClassLoader = getBeanClassLoader();
 		ClassLoader dynamicLoader = beanClassLoader;
 		boolean freshResolve = false;
@@ -1525,8 +1530,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
+		// 获取BeanDefinition中所指定的beanClassName
 		String className = mbd.getBeanClassName();
 		if (className != null) {
+			// className可以有SpEL,所以需要解析
 			Object evaluated = evaluateBeanDefinitionString(className, mbd);
 			if (!className.equals(evaluated)) {
 				// A dynamically resolved expression, supported as of 4.2...
@@ -1821,6 +1828,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return beanInstance;
 		}
 
+		// 如果beanInstance是FactoryBean，并且name也不是以&开头
 		Object object = null;
 		if (mbd != null) {
 			mbd.isFactoryBean = true;
@@ -1829,6 +1837,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 
+		// 从factoryBeanObjectCache中没有拿到则进行创建
 		if (object == null) {
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
@@ -1837,7 +1846,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
-			// 从factoryBeanObjectCache获取对象，如果存在则调用getObject方法
+			// 调用getObject方法得到对象并放入factoryBeanObjectCache中
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;

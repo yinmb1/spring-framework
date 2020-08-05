@@ -242,6 +242,7 @@ final class PostProcessorRegistrationDelegate {
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
 
+		// 获取BeanPostProcessor类型的bean
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when
@@ -274,6 +275,7 @@ final class PostProcessorRegistrationDelegate {
 
 		// First, register the BeanPostProcessors that implement PriorityOrdered.
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+		// 把priorityOrderedPostProcessors添加到beanFactory中
 		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
 
 		// Next, register the BeanPostProcessors that implement Ordered.
@@ -286,6 +288,7 @@ final class PostProcessorRegistrationDelegate {
 			}
 		}
 		sortPostProcessors(orderedPostProcessors, beanFactory);
+		// 把orderedPostProcessors添加到beanFactory中
 		registerBeanPostProcessors(beanFactory, orderedPostProcessors);
 
 		// Now, register all regular BeanPostProcessors.
@@ -380,6 +383,7 @@ final class PostProcessorRegistrationDelegate {
 		public Object postProcessAfterInitialization(Object bean, String beanName) {
 			if (!(bean instanceof BeanPostProcessor) && !isInfrastructureBean(beanName) &&
 					this.beanFactory.getBeanPostProcessorCount() < this.beanPostProcessorTargetCount) {
+
 				if (logger.isInfoEnabled()) {
 					logger.info("Bean '" + beanName + "' of type [" + bean.getClass().getName() +
 							"] is not eligible for getting processed by all BeanPostProcessors " +

@@ -304,8 +304,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		Object cacheKey = getCacheKey(bean.getClass(), beanName); // beanName  aService
 		// 判断
 		this.earlyProxyReferences.put(cacheKey, bean);
-
-		// 代理对象
 		return wrapIfNecessary(bean, beanName, cacheKey);  //代理对象
 	}
 

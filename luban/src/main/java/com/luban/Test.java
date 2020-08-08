@@ -10,9 +10,6 @@ public class Test {
 		AnnotationConfigApplicationContext context =
 				new AnnotationConfigApplicationContext(AppConfig.class);
 
-		// Spring 创建一个对象（new UserService()） ---> 属性赋值
-		UserService userService = context.getBean("userService", UserService.class);
-		userService.test(null);
 
 
 	}

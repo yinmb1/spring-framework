@@ -73,7 +73,7 @@ public interface BeanPostProcessor {
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		return bean;
-	}
+	};
 
 	/**
 	 * Apply this {@code BeanPostProcessor} to the given new bean instance <i>after</i> any bean

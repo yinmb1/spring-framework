@@ -62,7 +62,7 @@ public class MethodParameter {
 
 	private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 
-
+	// Executable是JDK中的抽象类，同一表示了构造器和普通方法
 	private final Executable executable;
 
 	private final int parameterIndex;

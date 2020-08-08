@@ -103,6 +103,7 @@ public class InjectionMetadata {
 				}
 			}
 		}
+		// checkedElements表示哪些注入点经过了!isExternallyManagedConfigMember验证，保存了需要Spring内部处理的注入点
 		this.checkedElements = checkedElements;
 	}
 

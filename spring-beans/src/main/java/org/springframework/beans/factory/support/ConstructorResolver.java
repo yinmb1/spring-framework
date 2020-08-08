@@ -89,6 +89,7 @@ class ConstructorResolver {
 	 */
 	private static final Object autowiredArgumentMarker = new Object();
 
+	//
 	private static final NamedThreadLocal<InjectionPoint> currentInjectionPoint =
 			new NamedThreadLocal<>("Current injection point");
 

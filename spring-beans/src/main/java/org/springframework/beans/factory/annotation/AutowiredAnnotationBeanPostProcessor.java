@@ -243,7 +243,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
-		// 拿出注入点，判断该注入点
+		// 获取beanType中的注入点
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, beanType, null);
 		metadata.checkConfigMembers(beanDefinition);
 	}
@@ -514,6 +514,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					if (metadata != null) {
 						metadata.clear(pvs);
 					}
+					// 注入点元信息
 					metadata = buildAutowiringMetadata(clazz);
 					this.injectionMetadataCache.put(cacheKey, metadata);
 				}
@@ -523,10 +524,13 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	}
 
 	private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
+
+		// 判断是不是候选者类，比如说类名，如果是以"java."开头的则不是候选者类
 		if (!AnnotationUtils.isCandidateClass(clazz, this.autowiredAnnotationTypes)) {
 			return InjectionMetadata.EMPTY;
 		}
 
+		//
 		List<InjectionMetadata.InjectedElement> elements = new ArrayList<>();
 		Class<?> targetClass = clazz;
 
@@ -536,16 +540,18 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			// 遍历属性，看是否有@Autowired，@Value，@Inject注解
 			ReflectionUtils.doWithLocalFields(targetClass, field -> {
 				MergedAnnotation<?> ann = findAutowiredAnnotation(field);
-				// 如果存在注解
+				// 如果存在@Autowired，@Value，@Inject注解其中一个
 				if (ann != null) {
-					// 如果字段是static的
+					// 如果字段是static的，则直接进行返回，不进行注入
 					if (Modifier.isStatic(field.getModifiers())) {
 						if (logger.isInfoEnabled()) {
 							logger.info("Autowired annotation is not supported on static fields: " + field);
 						}
 						return;
 					}
+					// 是否required
 					boolean required = determineRequiredStatus(ann);
+					// 生成一个注入点AutowiredFieldElement
 					currElements.add(new AutowiredFieldElement(field, required));
 				}
 			});
@@ -594,6 +600,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	private MergedAnnotation<?> findAutowiredAnnotation(AccessibleObject ao) {
 		// 查看当前字段上是否存在@Autowired，@Value，@Inject注解，存在其中一个则返回，表示可以注入
 		MergedAnnotations annotations = MergedAnnotations.from(ao);
+		// autowiredAnnotationTypes是一个LinkedHashSet，所以会按顺序去判断当前字段中是否有Autowired注解，如果有则返回
+		// 如果没有Autowired注解，那么则判断是否有Value注解，在判断是否有Inject注解
 		for (Class<? extends Annotation> type : this.autowiredAnnotationTypes) {
 			MergedAnnotation<?> annotation = annotations.get(type);
 			if (annotation.isPresent()) {
@@ -713,7 +721,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				Assert.state(beanFactory != null, "No BeanFactory available");
 				TypeConverter typeConverter = beanFactory.getTypeConverter();
 				try {
-					// 调用bean工厂的resolveDependency方法开始解析并得到依赖的对象
+					// 调用bean工厂的resolveDependency方法开始解析并得到依赖的对象，desc表示属性字段
 					value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
 				}
 				catch (BeansException ex) {

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class LubanService {
 
-	public void test() {
-		System.out.println("test");
+	public User test() {
+		return new User("xxx");
 	}
 }

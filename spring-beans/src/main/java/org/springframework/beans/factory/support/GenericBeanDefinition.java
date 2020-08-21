@@ -36,9 +36,14 @@ import org.springframework.util.ObjectUtils;
  * @see #setParentName
  * @see RootBeanDefinition
  * @see ChildBeanDefinition
+ *
+ *
+ * GenericBeanDefinition比较简单，在AbstractBeanDefinition的基础上增加了parentName的功能
+ * {@link RootBeanDefinition} 也是直接基础了AbstractBeanDefinition，但是RootBeanDefinition中没有实现parentName的功能
  */
 @SuppressWarnings("serial")
 public class GenericBeanDefinition extends AbstractBeanDefinition {
+
 
 	@Nullable
 	private String parentName;

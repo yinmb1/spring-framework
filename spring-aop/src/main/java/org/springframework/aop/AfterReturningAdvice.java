@@ -24,6 +24,7 @@ import org.springframework.lang.Nullable;
  * After returning advice is invoked only on normal method return, not if an
  * exception is thrown. Such advice can see the return value, but cannot change it.
  *
+ * 一个方法返回后执行，能拿到返回值，但是不能修改它(这是建议，没有进行控制，还是可以修改的)
  * @author Rod Johnson
  * @see MethodBeforeAdvice
  * @see ThrowsAdvice

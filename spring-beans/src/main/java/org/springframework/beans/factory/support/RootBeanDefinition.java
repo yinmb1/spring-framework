@@ -50,6 +50,9 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @see GenericBeanDefinition
  * @see ChildBeanDefinition
+ *
+ * RootBeanDefinition继承了AbstractBeanDefinition，在AbstractBeanDefinition的基础上扩展了一些而外的功能
+ * 并且RootBeanDefinition是没有父BeanDefinition的
  */
 @SuppressWarnings("serial")
 public class RootBeanDefinition extends AbstractBeanDefinition {
@@ -60,6 +63,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	@Nullable
 	private AnnotatedElement qualifiedElement;
 
+	// 决定了什么时候definition需要重新合并
 	/** Determines if the definition needs to be re-merged. */
 	volatile boolean stale;
 

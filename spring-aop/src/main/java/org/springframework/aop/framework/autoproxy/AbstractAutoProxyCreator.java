@@ -304,6 +304,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		Object cacheKey = getCacheKey(bean.getClass(), beanName); // beanName  aService
 		// 判断
 		this.earlyProxyReferences.put(cacheKey, bean);
+
 		return wrapIfNecessary(bean, beanName, cacheKey);  //代理对象
 	}
 
@@ -318,14 +319,14 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (bean != null) {
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			// earlyProxyReferences中存的是哪些提前进行了AOP的bean，beanName:AOP之前的对象
-			// 注意earlyProxyReferences中并没有存AOP之后的代理对象
+			// 注意earlyProxyReferences中并没有存AOP之后的代理对象  BeanPostProcessor
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
 				// 没有提前进行过AOP，则进行AOP
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
 		// 为什么不返回代理对象呢？
-		return bean;
+		return bean;   //
 	}
 
 

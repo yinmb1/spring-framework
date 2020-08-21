@@ -194,7 +194,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					// 为什么需要singletonFactories？
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
-						singletonObject = singletonFactory.getObject();  // 执行lambda AOP代理代理里面的原始对象
+						singletonObject = singletonFactory.getObject();  // 执行lambda AOp
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);
 					}

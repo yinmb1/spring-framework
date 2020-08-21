@@ -69,7 +69,7 @@ public interface ImportBeanDefinitionRegistrar {
 	 * <p>The default implementation delegates to
 	 * {@link #registerBeanDefinitions(AnnotationMetadata, BeanDefinitionRegistry)}.
 	 * @param importingClassMetadata annotation metadata of the importing class
-	 * @param registry current bean definition registry
+	 * @param registry curret bean definition registry
 	 * @param importBeanNameGenerator the bean name generator strategy for imported beans:
 	 * {@link ConfigurationClassPostProcessor#IMPORT_BEAN_NAME_GENERATOR} by default, or a
 	 * user-provided one if {@link ConfigurationClassPostProcessor#setBeanNameGenerator}

@@ -299,7 +299,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			try {
-				// BeanDefinition合并
+				// 得到合并后的BeanDefinition
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
 
@@ -332,7 +332,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// 根据Scope去创建bean
 				// Create bean instance.
 				if (mbd.isSingleton()) {
-					// 创建单例bean，虽然也是getSingleton方法，但是参数不一样，这里传了一个ObjectFactory，用来创建Object
+					// 获取单例bean，如果获取不到则创建一个bean，并且放入单例池中
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 								return createBean(beanName, mbd, args);
@@ -524,17 +524,27 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @see #getBean
 	 * @see #getType
 	 */
+	// 判断某个beanName对应的bean或beanDefinition的类型是否和typeToMatch所指定的类型匹配
+	// 1. 先根据beanName去单例池中找到是否存在bean对象，如果存在则直接判断该bean对象的类型是否和typeToMatch匹配
+	// 2. 如果拿到的对象是FactoryBean，那么则看beanName是怎样的，如果是&xxx，那么则表示正好是需要的，则直接检查拿到的对象是不是匹配typeToMatch
+	// 3. 如果beanName不是&xxx，就是正常的beanName，那么则表示应该去FactoryBean所代理的bean，此时直接调用FactoryBean的getObjectType方法得到类型，然后进行匹配
+	//
 	protected boolean isTypeMatch(String name, ResolvableType typeToMatch, boolean allowFactoryBeanInit)
 			throws NoSuchBeanDefinitionException {
 
 		String beanName = transformedBeanName(name);
+		// 是不是FactoryBean的工厂名字
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
+		// 检查手动添加到单例池中的bean
+		// 先根据beanName从单例池中去取值
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
+			// 从单例池中去到了值
 			if (beanInstance instanceof FactoryBean) {
 				if (!isFactoryDereference) {
+					// 拿到FactoryBean对应的真正的bean的类型，就是getObjectType
 					Class<?> type = getTypeForFactoryBean((FactoryBean<?>) beanInstance);
 					return (type != null && typeToMatch.isAssignableFrom(type));
 				}
@@ -543,10 +553,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 			}
 			else if (!isFactoryDereference) {
+				// 如果beanInstance就是普通的bean
+				// 如果beanInstance是typeToMatch的一个实例，可以是typeToMatch子类的一个实例
 				if (typeToMatch.isInstance(beanInstance)) {
 					// Direct match for exposed instance?
 					return true;
 				}
+				// 如果当前类型有泛型，比如
 				else if (typeToMatch.hasGenerics() && containsBeanDefinition(beanName)) {
 					// Generics potentially only match on the target class, not on the proxy...
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
@@ -572,10 +585,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 		else if (containsSingleton(beanName) && !containsBeanDefinition(beanName)) {
 			// null instance registered
+			// 可能直接利用了BeanFactory的register方法注册了一个bean，beanName有值，但是对于的是null。
+			// 表示根据beanName找到的bean为null，所以不匹配
 			return false;
 		}
 
+		// 如果从单例池中根据beanName没找到值
+
 		// No singleton instance found -> check bean definition.
+		// 去父BeanFactory中去递归查找并且进行匹配
 		BeanFactory parentBeanFactory = getParentBeanFactory();
 		if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 			// No bean definition found in this factory -> delegate to parent.
@@ -587,6 +605,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 
 		// Setup the types that we want to match against
+		// 要么匹配FactoryBean，要么匹配FactoryBean+指定的类型
 		Class<?> classToMatch = typeToMatch.resolve();
 		if (classToMatch == null) {
 			classToMatch = FactoryBean.class;
@@ -604,6 +623,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (!isFactoryDereference && dbd != null && isFactoryBean(beanName, mbd)) {
 			// We should only attempt if the user explicitly set lazy-init to true
 			// and we know the merged bean definition is for a factory bean.
+
+			// 如果是FactoryBean，并且是非懒加载或者直接允许立即初始化
 			if (!mbd.isLazyInit() || allowFactoryBeanInit) {
 				RootBeanDefinition tbd = getMergedBeanDefinition(dbd.getBeanName(), dbd.getBeanDefinition(), mbd);
 				Class<?> targetType = predictBeanType(dbd.getBeanName(), tbd, typesToMatch);
@@ -616,15 +637,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// If we couldn't use the target type, try regular prediction.
 		if (predictedType == null) {
 			predictedType = predictBeanType(beanName, mbd, typesToMatch);
+			// 如果没有推测出bean的类型，则返回false
 			if (predictedType == null) {
 				return false;
 			}
 		}
 
 		// Attempt to get the actual ResolvableType for the bean.
+		// 最终bean的类型
 		ResolvableType beanType = null;
 
 		// If it's a FactoryBean, we want to look at what it creates, not the factory class.
+		// 如果是一个FactoryBean，则获取对应的Bean的类型
 		if (FactoryBean.class.isAssignableFrom(predictedType)) {
 			if (beanInstance == null && !isFactoryDereference) {
 				beanType = getTypeForFactoryBean(beanName, mbd, allowFactoryBeanInit);
@@ -635,6 +659,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 		else if (isFactoryDereference) {
+			// 如果beanName是一个FactoryBean的名字格式，&xxx
+
 			// Special case: A SmartInstantiationAwareBeanPostProcessor returned a non-FactoryBean
 			// type but we nevertheless are being asked to dereference a FactoryBean...
 			// Let's check the original bean class and proceed with it if it is a FactoryBean.
@@ -657,6 +683,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// If we have a bean type use it so that generics are considered
+		// 查看是否匹配，beanType是不是typeToMatch的子类，所以，如果注入的类型是父类，可以注入子类的实例
 		if (beanType != null) {
 			return typeToMatch.isAssignableFrom(beanType);
 		}
@@ -1489,6 +1516,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			}
 			else {
+				//
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
 		}
@@ -1611,6 +1639,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	@Nullable
 	protected Class<?> predictBeanType(String beanName, RootBeanDefinition mbd, Class<?>... typesToMatch) {
+		// 推测bean的类型
 		Class<?> targetType = mbd.getTargetType();
 		if (targetType != null) {
 			return targetType;

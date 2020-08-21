@@ -144,7 +144,10 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+		// 先交给GenericTypeAwareAutowireCandidateResolver进行验证bd和descriptor是否匹配
 		boolean match = super.isAutowireCandidate(bdHolder, descriptor);
+		// 如果某个beanDefinition和descriptor匹配，那么再判断一下是否使用了@Qualifier注解
+		// 如果使用了则要继续判断当前bd的beanName是否和@Qualifier注解所指定的名字相等
 		if (match) {
 			match = checkQualifiers(bdHolder, descriptor.getAnnotations());
 			if (match) {

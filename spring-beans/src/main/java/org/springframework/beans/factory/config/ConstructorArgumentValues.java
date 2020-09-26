@@ -43,8 +43,10 @@ import org.springframework.util.ObjectUtils;
  */
 public class ConstructorArgumentValues {
 
+	// 某个index对应的构造方法参数值，通过addIndexedArgumentValue()添加的
 	private final Map<Integer, ValueHolder> indexedArgumentValues = new LinkedHashMap<>();
 
+	// 没有指定某个index的构造方法参数值，反正是一个构造方法参数值，最终会应用在哪个index上，要再需要时进行匹配
 	private final List<ValueHolder> genericArgumentValues = new ArrayList<>();
 
 

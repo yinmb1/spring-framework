@@ -1264,23 +1264,29 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
-			// 利用缓存找
+			// 如果DependencyDescriptor是一个ShortcutDependencyDescriptor，
+			// 那么会直接理解beanName从beanFactory中拿到一个bean，
+			// 在利用@Autowired注解来进行依赖注入时会利用ShortcutDependencyDescriptor来进行依赖注入的缓存，
+			// 表示当解析完某个依赖信息后，会把依赖的bean的beanName缓存起来
 			Object shortcut = descriptor.resolveShortcut(this);
 			if (shortcut != null) {
 				return shortcut;
 			}
 
-			Class<?> type = descriptor.getDependencyType(); // 获取注入点的类型，字段的类型，或方法参数的类型
+			// 获取descriptor具体的类型，某个Filed的类型或某个方法参数的类型
+			Class<?> type = descriptor.getDependencyType();
 
 			// 获取@Value注解中所配置的值
 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor); // 是否通过@Value注解指定了值
 			if (value != null) {
 				if (value instanceof String) {
+					// 先进行占位符的填充，解析"$"符号
 					String strVal = resolveEmbeddedValue((String) value);
 
 					BeanDefinition bd = (beanName != null && containsBean(beanName) ?
 							getMergedBeanDefinition(beanName) : null);
 
+					// 解析Spring EL表达式，解析"#"符号（可以进行运算，可以写某个bean的名字）
 					value = evaluateBeanDefinitionString(strVal, bd);
 				}
 				TypeConverter converter = (typeConverter != null ? typeConverter : getTypeConverter());
@@ -1343,7 +1349,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				autowiredBeanNames.add(autowiredBeanName);
 			}
 			if (instanceCandidate instanceof Class) {
-				// 根据name找
+				// 调用beanFactory.getBean(beanName);创建bean对象
 				instanceCandidate = descriptor.resolveCandidate(autowiredBeanName, type, this);
 			}
 			Object result = instanceCandidate;
@@ -1520,6 +1526,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			// requiredType是autowiringType的子类
 			// 也就是，某个bean中的属性的类型是requiredType，是resolvableDependencies中的子类
 			if (autowiringType.isAssignableFrom(requiredType)) {
+				//  是resolvableDependencies中的子类所存的对象
 				Object autowiringValue = classObjectEntry.getValue();
 				autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
 				if (requiredType.isInstance(autowiringValue)) {

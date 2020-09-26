@@ -121,11 +121,12 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
-		// 获取Configuration注解的属性信息
+		// 获取Configuration注解的属性信息，配置类分两种，被@Configuration标记的配置类为full,其他的配置类为lite,full的配置类会生成代理对象
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		// 注意isConfigurationCandidate方法，会检查是否存在@Component， @ComponentScan，@Import，@ImportResource，@Bean注解
 		else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}

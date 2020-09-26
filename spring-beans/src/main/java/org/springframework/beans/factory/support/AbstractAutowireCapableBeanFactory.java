@@ -499,6 +499,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Prepare method overrides.
 		try {
+			// 对通过XML定义的bean中的look-up方法进行预处理
+			// 对于@Lookup注解标注的方法不在这里进行处理，@AutowiredAnnotationBeanPostProcessor会处理@Lookup注解
+			// 不研究了
 			mbdToUse.prepareMethodOverrides();
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -558,12 +561,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
+			// factoryBeanObjectCache：存的是beanName对应的FactoryBean.getObject()所返回的对象
+			// factoryBeanInstanceCache：存的是beanName对应的FactoryBean实例对象
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 
 		// 2、实例化
 		if (instanceWrapper == null) {
-			// 创建bean实例, 推断构造方法
+			// 创建bean实例
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 
@@ -611,7 +616,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 对象已经暴露出去了
 		Object exposedObject = bean;
 		try {
-			// 3、填充属性
+			// 3、填充属性 @Autowired
 			populateBean(beanName, mbd, instanceWrapper);
 
 			// 4、 初始化 和 BeanPostProcessor
@@ -854,7 +859,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@Override
 	protected ResolvableType getTypeForFactoryBean(String beanName, RootBeanDefinition mbd, boolean allowInit) {
+		// 获取FactoryBean的类型
+
+
 		// Check if the bean definition itself has defined the type with an attribute
+		// 先检查BeanDefinition的attributes中是否指明了对应的类型
 		ResolvableType result = getTypeForFactoryBeanFromAttributes(mbd);
 		if (result != ResolvableType.NONE) {
 			return result;
@@ -911,11 +920,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// If we're allowed, we can create the factory bean and call getObjectType() early
 		if (allowInit) {
+			// 得到一个FactoryBean对象
 			FactoryBean<?> factoryBean = (mbd.isSingleton() ?
 					getSingletonFactoryBeanForTypeCheck(beanName, mbd) :
 					getNonSingletonFactoryBeanForTypeCheck(beanName, mbd));
 			if (factoryBean != null) {
 				// Try to obtain the FactoryBean's object type from this early stage of the instance.
+				// 调用getObject方法得到FactoryBean的对应的bean的类型
 				Class<?> type = getTypeForFactoryBean(factoryBean);
 				if (type != null) {
 					return ResolvableType.forClass(type);
@@ -1136,6 +1147,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@Nullable
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
 		Object bean = null;
+		// beforeInstantiationResolved为null或true
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
 			// Make sure bean class is actually resolved at this point.
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
@@ -1219,18 +1231,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Shortcut when re-creating the same bean...
-		// 4. 重新创建对象时的快捷方式（多例bean时就是重新创建）
-		// 4.下面这段代码都是在通过构造函数实例化这个Bean,分两种情况，
-		// 一种是通过默认的无参构造，
-		// 一种是通过推断出来的构造函数
 		boolean resolved = false;
 		boolean autowireNecessary = false;
+		// 如果在创建bean时没有手动指定构造方法的参数，那么则看当前BeanDefinition是不是已经确定了要使用的构造方法和构造方法参数
+		// 注意：如果没有手动指定参数，那么就肯定时自动推断出来的，所以一旦发现当前BeanDefinition中已经确定了要使用的构造方法和构造方法参数，
+		// 那么就要使用autowireConstructor()方法来构造一个bean对象
 		if (args == null) {
 			synchronized (mbd.constructorArgumentLock) {
-				// 只要推断出来过构造方法，就会把这个构造方法缓存在resolvedConstructorOrFactoryMethod属性上
-				// 下次重复创建对象时，就不用再次进行推断了，直接用就可以了
+				// 该BeanDefinition是否已经决定了要使用的构造方法或工厂方法
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
 					resolved = true;
+					// 该BeanDefinition是否已经决定了要使用的构造方法参数
 					autowireNecessary = mbd.constructorArgumentsResolved;
 				}
 			}
@@ -1242,16 +1253,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				return autowireConstructor(beanName, mbd, null, null);
 			}
 			else {
-				// 用无参的构造方法来实例化bean
+				// 如果构造方法已经确定了，但是没有确定构造方法参数，那就表示没有构造方法参数，用无参的构造方法来实例化bean
 				return instantiateBean(beanName, mbd);
 			}
 		}
 
 		// Candidate constructors for autowiring?
-		// 利用beanPostProcessor来选取构造方法，如果返回值（ctors）不为空，则表示利用beanPostProcessor找到了候选的构造方法，那么则进行自动推断
-		// 如果当前bd是构造方法自动注入，那么也进行自动推断
-		// 如果当前bd中存在了构造方法参数值，那么也进行自动推断
-		// 如果是在getBean时指定了args, 那么也进行自动推断
+//		 一个类有多个构造方法，那么到底哪些构造方法是可以拿来用的，Spring也提供了一个扩展点，程序员可以进行控制
+//		 利用beanPostProcessor来选取构造方法，如果返回值（ctors）不为空，则表示利用beanPostProcessor找到了候选的构造方法，那么则进行自动推断
+//		 如果当前bd是构造方法自动注入，那么也进行自动推断
+//		 如果当前bd中存在了构造方法参数值，那么也进行自动推断
+//		 如果是在getBean时指定了args, 那么也进行自动推断
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
@@ -1260,7 +1272,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Preferred constructors for default construction?
-		// 使用默认的构造方法去生成实例
+		// 没啥用
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
 			return autowireConstructor(beanName, mbd, ctors, null);
@@ -1625,7 +1637,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		PropertyValues pvs = mbd.getPropertyValues(); // 在BeanDefinition中添加的属性和值，
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
 
-		// 对类里所有的属性进行过滤
+		// 对类里所有的属性进行过滤,确定哪些属性是需要进行自动装配的
 		for (PropertyDescriptor pd : pds) {
 			// 属性有set方法，并且
 			// 没有通过DependencyCheck排除，并且
@@ -1688,7 +1700,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #ignoreDependencyType(Class)
 	 * @see #ignoreDependencyInterface(Class)
 	 */
+	// 判断pd属性是不是不需要进行自动装配，返回true表示不需要自动装配
 	protected boolean isExcludedFromDependencyCheck(PropertyDescriptor pd) {
+		//
 		return (AutowireUtils.isExcludedFromDependencyCheck(pd) ||
 				this.ignoredDependencyTypes.contains(pd.getPropertyType()) ||
 				AutowireUtils.isSetterDefinedInInterface(pd, this.ignoredDependencyInterfaces));

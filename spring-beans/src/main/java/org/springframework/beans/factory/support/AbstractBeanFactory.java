@@ -244,7 +244,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
 			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
 
-		// 对beanName进行转换
+		// 对beanName进行转换 name如果是"&lubanFactoryBean"，那么beanName就是"lubanFactoryBean"
 		final String beanName = transformedBeanName(name);
 		Object bean;
 
@@ -1118,11 +1118,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (beanInstance != null) {
 			return (beanInstance instanceof FactoryBean);
 		}
+
+		// 如果本BeanFactory不存在该bean，则判断父BeanFactory中是否存在
 		// No singleton instance found -> check bean definition.
 		if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
 			return ((ConfigurableBeanFactory) getParentBeanFactory()).isFactoryBean(name);
 		}
+
 		// 判断BeanDefinition上的isFactoryBean属性
 		return isFactoryBean(beanName, getMergedLocalBeanDefinition(beanName));
 	}

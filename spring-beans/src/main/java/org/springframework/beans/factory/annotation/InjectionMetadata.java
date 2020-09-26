@@ -93,8 +93,7 @@ public class InjectionMetadata {
 		Set<InjectedElement> checkedElements = new LinkedHashSet<>(this.injectedElements.size());
 		for (InjectedElement element : this.injectedElements) {
 			Member member = element.getMember();
-			// 这里会判断externallyManagedConfigMembers中是否存在member
-			// 意思是可以控制，某个属性交给外部进行注入，不需要Spring自动注入
+			// 如果某个Member存在于BeanDefinition的externallyManagedConfigMembers中，那么这个Member不会被自动注入
 			if (!beanDefinition.isExternallyManagedConfigMember(member)) {
 				beanDefinition.registerExternallyManagedConfigMember(member);
 				checkedElements.add(element);

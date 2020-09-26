@@ -39,4 +39,5 @@ rootProject.children.each {project ->
 include 'luban'
 include 'luban-aop'
 include 'luban-spring-beanDefinition'
+include 'luban-transaction'
 

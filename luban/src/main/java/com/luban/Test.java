@@ -1,27 +1,46 @@
 package com.luban;
 
-import com.luban.entity.*;
+import com.luban.entity.User;
+import com.luban.service.MyAdvisor;
 import com.luban.service.UserService;
+import org.springframework.aop.MethodBeforeAdvice;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.util.MethodInvoker;
+
+import java.lang.reflect.Method;
 
 public class Test {
 
 	public static void main(String[] args) {
+
+		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
 //		ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("spring.xml");
-////		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
+
+
+		UserService userService = applicationContext.getBean("userService", UserService.class);
+		userService.test111();
+
+//		Advised advised = (Advised) userService;
+//		System.out.println(advised.getAdvisors());
 //
-//		UserService userService = applicationContext.getBean("userService", UserService.class);
+//		advised.addAdvice(new MethodBeforeAdvice() {
+//			@Override
+//			public void before(Method method, Object[] args, Object target) throws Throwable {
+//				System.out.println("fffff" + method.getName());
+//			}
+//		});
+//
+//		System.out.println("=======");
+//
+//		userService.test();
 
-//		System.out.println(userService.getUser());
+//		Person person = new User();
 
 
-		Object[] objects = new Object[]{new A()};
 
-		System.out.println(MethodInvoker.getTypeDifferenceWeight(new Class[]{A.class}, objects));
-		System.out.println(MethodInvoker.getTypeDifferenceWeight(new Class[]{B.class}, objects));
-		System.out.println(MethodInvoker.getTypeDifferenceWeight(new Class[]{C.class}, objects));
-		System.out.println(MethodInvoker.getTypeDifferenceWeight(new Class[]{D.class}, objects));
+
+
 	}
 }

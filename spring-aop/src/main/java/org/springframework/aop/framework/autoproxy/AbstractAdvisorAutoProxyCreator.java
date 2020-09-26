@@ -64,6 +64,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	}
 
 	protected void initBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+		// Advisor搜索助手
 		this.advisorRetrievalHelper = new BeanFactoryAdvisorRetrievalHelperAdapter(beanFactory);
 	}
 
@@ -91,6 +92,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @see #sortAdvisors
 	 * @see #extendAdvisors
 	 */
+	// 查找合格的Advisor(和beanClass匹配)
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		// 得到所有的Advisor
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();

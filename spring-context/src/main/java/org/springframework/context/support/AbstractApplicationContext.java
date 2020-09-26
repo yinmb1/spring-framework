@@ -521,6 +521,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			// 获取初始化好了的beanFactory
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
@@ -545,7 +546,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
-				// 这是ApplicationContext的messageSource
+				// 初始化MessageSource，如果配置了一个名字叫做“messageSource”的BeanDefinition
+				// 就会把这个Bean创建出来，并赋值给ApplicationContext的messageSource属性
+				// 这样ApplicationContext就可以使用国际化的功能了
 				initMessageSource();
 
 				// Initialize event multicaster for this context.

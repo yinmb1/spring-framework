@@ -220,7 +220,7 @@ class ConfigurationClassParser {
 		return this.configurationClasses.keySet();
 	}
 
-
+	// 解析配置类
 	protected void processConfigurationClass(ConfigurationClass configClass) throws IOException {
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
@@ -272,7 +272,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @PropertySource annotations
-		// 2. 解析@PropertySource注解，得到所配置的property键值对
+		// 2. 解析@PropertySource注解
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
 				org.springframework.context.annotation.PropertySource.class)) {
@@ -286,7 +286,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
-		// 3. 解析@ComponentScans注解和@ComponentScan注解，得到扫描路径，然后开始扫描
+		// 3. 解析@ComponentScan注解，并进行扫描
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
@@ -294,7 +294,7 @@ class ConfigurationClassParser {
 			for (AnnotationAttributes componentScan : componentScans) {
 
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
-				// 执行扫描
+				// 扫描得到BeanDefinition
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 
@@ -305,7 +305,7 @@ class ConfigurationClassParser {
 						bdCand = holder.getBeanDefinition();
 					}
 
-					// 检查一下扫描得到BeanDefinition，检查是不是加了Configuration注解，如果是则递归下去进行解析
+					// 检查扫描所得到BeanDefinition是不是配置Bean，基本上都有@Component注解，所以都是配置类
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
@@ -314,7 +314,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @Import annotations
-		// 4. 解析@Import，得到手动导入进来的bean
+		// 4. 解析@Import，getImports方法返回AppConfig.class上定义的Import注解中所导入的类的信息
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
 		// Process any @ImportResource annotations
@@ -366,8 +366,9 @@ class ConfigurationClassParser {
 		Collection<SourceClass> memberClasses = sourceClass.getMemberClasses();
 		if (!memberClasses.isEmpty()) {
 			List<SourceClass> candidates = new ArrayList<>(memberClasses.size());
+			// 遍历内部类
 			for (SourceClass memberClass : memberClasses) {
-
+				// 如果内部类也是配置类Bean
 				if (ConfigurationClassUtils.isConfigurationCandidate(memberClass.getMetadata()) &&
 						!memberClass.getMetadata().getClassName().equals(configClass.getMetadata().getClassName())) {
 					candidates.add(memberClass);
@@ -381,6 +382,7 @@ class ConfigurationClassParser {
 				else {
 					this.importStack.push(configClass);
 					try {
+						// 解析配置类
 						processConfigurationClass(candidate.asConfigClass(configClass));
 					}
 					finally {
@@ -468,10 +470,14 @@ class ConfigurationClassParser {
 		PropertySourceFactory factory = (factoryClass == PropertySourceFactory.class ?
 				DEFAULT_PROPERTY_SOURCE_FACTORY : BeanUtils.instantiateClass(factoryClass));
 
+		// @PropertySource注解中所指定的properties文件路径
 		for (String location : locations) {
 			try {
+				// 解析占位符
 				String resolvedLocation = this.environment.resolveRequiredPlaceholders(location);
+				// 得到资源文件
 				Resource resource = this.resourceLoader.getResource(resolvedLocation);
+				// 把资源文件解析成PropertySource对象，并且添加到environment中去
 				addPropertySource(factory.createPropertySource(name, new EncodedResource(resource, encoding)));
 			}
 			catch (IllegalArgumentException | FileNotFoundException | UnknownHostException ex) {
@@ -488,6 +494,7 @@ class ConfigurationClassParser {
 		}
 	}
 
+	//
 	private void addPropertySource(PropertySource<?> propertySource) {
 		String name = propertySource.getName();
 		MutablePropertySources propertySources = ((ConfigurableEnvironment) this.environment).getPropertySources();

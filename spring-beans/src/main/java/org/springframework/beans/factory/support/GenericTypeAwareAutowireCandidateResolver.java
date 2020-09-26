@@ -143,6 +143,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 			return true;
 		}
 		// Full check for complex generic type match...
+		// dependencyType是泛型的真实类型，targetType是筛选出来的某个bean的类型
 		return dependencyType.isAssignableFrom(targetType);
 	}
 

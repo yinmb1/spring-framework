@@ -6,16 +6,11 @@
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans
 	   https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
 
-	<bean id="userService" class="com.luban.service.UserService"/>
-	<bean id="lubanAspect" class="com.luban.service.LubanAspect"/>
+	<bean id="user" class="com.luban.entity.User"/>
 
 
-	<aop:config>
-		<aop:aspect id="lubanAspect" ref="lubanAspect">
-			<aop:pointcut id="lubanPointCut" expression="execution(public void com.luban.service.UserService.test111())"/>
-			<aop:before method="test" pointcut-ref="lubanPointCut"/>
-		</aop:aspect>
-	</aop:config>
+	<bean id="userService" class="com.luban.service.UserService" autowire="byName"/>
+
 
 
 

@@ -1839,7 +1839,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
-		// 如果是&LubanFactoryBean，那么则直接返回单例池（SingletonObjects）中的对象
+		// 如果是&lubanFactoryBean，那么则直接返回单例池（SingletonObjects）中的对象
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;

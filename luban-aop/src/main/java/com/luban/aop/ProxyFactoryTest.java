@@ -29,6 +29,6 @@ public class ProxyFactoryTest {
 
 		LubanService proxy = (LubanService) proxyFactory.getProxy(); // 代理对象
 
-		proxy.test();
+		proxy.test();  // 代理对象（另外一个）
 	}
 }

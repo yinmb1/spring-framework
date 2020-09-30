@@ -608,7 +608,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 此时的bean还没有完成属性注入，是一个非常简单的对象
 			// 构造一个对象工厂添加到singletonFactories中
 			// 第四次调用后置处理器
-			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));  // AService
 //			addEarlySingleton(beanName, bean);
 		}
 

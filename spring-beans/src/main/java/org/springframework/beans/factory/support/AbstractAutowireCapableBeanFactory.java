@@ -418,6 +418,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object result = existingBean;
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			// BPP1--》BPP2-->BPP3
 			Object current = processor.postProcessBeforeInitialization(result, beanName);
 			if (current == null) {
 				return result;
@@ -523,7 +524,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
-			// 创建bean
+			// 创建bean   Spring自带的创建bean的方法
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -568,7 +569,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// 2、实例化
 		if (instanceWrapper == null) {
-			// 创建bean实例
+			// 创建bean实例  new USerSerive()
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 
@@ -710,13 +711,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@Nullable
 	protected Class<?> determineTargetType(String beanName, RootBeanDefinition mbd, Class<?>... typesToMatch) {
-		Class<?> targetType = mbd.getTargetType();
+		Class<?> targetType = mbd.getTargetType(); // 获取resolvedTargetType属性，也相当于缓存，
 		if (targetType == null) {
+			// 如果BeanDefinition中设置了factoryMethodName，那么就通过factoryMethodName来判断类型，否则获取BeanDefinition中的beanClass
 			targetType = (mbd.getFactoryMethodName() != null ?
 					getTypeForFactoryMethod(beanName, mbd, typesToMatch) :
 					resolveBeanClass(mbd, beanName, typesToMatch));
 			if (ObjectUtils.isEmpty(typesToMatch) || getTempClassLoader() == null) {
-				mbd.resolvedTargetType = targetType;
+				mbd.resolvedTargetType = targetType; // 将解析出来的类型记录到resolvedTargetType中
 			}
 		}
 		return targetType;

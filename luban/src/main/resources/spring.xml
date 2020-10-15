@@ -6,13 +6,27 @@
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans
 	   https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
 
-	<bean id="user" class="com.luban.entity.User"/>
+		<!-- BeanDefinition合并 -->
+<!--		<bean id="parent"  abstract="true" scope="prototype"/>-->
 
 
-	<bean id="userService" class="com.luban.service.UserService" autowire="byName"/>
+<!--		<bean id="userService" class="com.luban.service.UserService" >-->
+
+<!--		</bean>-->
 
 
 
+
+
+<!--	<bean id="person" class="com.luban.entity.Person">-->
+<!--		<property name="xx" value="123"/>-->
+<!--	</bean>-->
+
+	<bean name="orderService" class="com.luban.service.OrderService" >
+	</bean>
+
+	<bean name="userService" class="com.luban.service.UserService" autowire="byType">
+	</bean>
 
 
 

@@ -137,7 +137,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * here, supporting "#{...}" expressions in a Unified EL compatible style.
 	 * @since 3.0
 	 */
-	void setBeanExpressionResolver(@Nullable BeanExpressionResolver resolver);
+	void setBeanExpressionResolver(@Nullable BeanExpressionResolver resolver);  //el
 
 	/**
 	 * Return the resolution strategy for expressions in bean definition values.

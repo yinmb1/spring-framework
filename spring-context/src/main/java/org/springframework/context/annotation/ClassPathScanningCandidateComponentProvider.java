@@ -431,7 +431,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				}
 				if (resource.isReadable()) {
 					try {
-						// MetadataReader包含了对应class的元信息以及注解元信息
+						// MetadataReader包含了对应class的元信息以及注解元信息, MetadataReader
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 						// 判断一个类是不是Component
 						if (isCandidateComponent(metadataReader)) {

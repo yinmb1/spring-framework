@@ -279,6 +279,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
 				}
 			}
+			// 检查BeanDefinition是不是配置类候选者，那么什么样的BeanDefinition符合呢？
 			// 1. 存在@Configuration的就是配置类，或者
 			// 2. 存在@Component，@ComponentScan，@Import，@ImportResource，或者
 			// 3. 存在@Bean标注的方法
@@ -294,7 +295,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Sort by previously determined @Order value, if applicable
-		// 将配置类进行排序
+		// 将配置类进行排序，根据@Order注解进行排序
 		configCandidates.sort((bd1, bd2) -> {
 			int i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());
 			int i2 = ConfigurationClassUtils.getOrder(bd2.getBeanDefinition());
@@ -330,7 +331,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
 		do {
-			// 解析
+			// 对配置类进行解析
 			parser.parse(candidates);
 			parser.validate();
 

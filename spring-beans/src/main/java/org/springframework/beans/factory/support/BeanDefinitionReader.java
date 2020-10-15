@@ -37,7 +37,7 @@ import org.springframework.lang.Nullable;
  * @since 1.1
  * @see org.springframework.core.io.Resource
  */
-public interface BeanDefinitionReader {
+public interface BeanDefinitionReader {  // ? im  BeanDefinitionReader
 
 	/**
 	 * Return the bean factory to register the bean definitions with.

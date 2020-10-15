@@ -883,17 +883,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Trigger initialization of all non-lazy singleton beans...
 		// 循环bd，实例化单例bean
-		for (String beanName : beanNames) {
+		for (String beanName : beanNames) {  // userService
 			// 对beanDefinition进行合并，基于合并后的BeanDefinition去创建bean
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 
 			// 非抽象，单例，非懒加载
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
 
-				// FactoryBean
-				// 判断是不是一个FactoryBean
+				// 判断是不是一个SmartFactoryBean
 				if (isFactoryBean(beanName)) {
-					//  根据&beanName创建一个LubanFactoryBean的对象
+					//  如果是一个FactoryBean，那么则获取LubanFactoryBean对象
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						final FactoryBean<?> factory = (FactoryBean<?>) bean;
@@ -909,7 +908,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 									((SmartFactoryBean<?>) factory).isEagerInit());
 						}
 						if (isEagerInit) {
-							// 根据beanName去创建bean
+							// 根据beanName去生成FactoryBean中所生成的Bean对象
 							getBean(beanName);
 						}
 					}
@@ -1103,7 +1102,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Override
 	public void destroySingletons() {
 		super.destroySingletons();
+		// 清空manualSingletonNames集合
 		updateManualSingletonNames(Set::clear, set -> !set.isEmpty());
+		// 情况其他集合
 		clearByTypeCache();
 	}
 

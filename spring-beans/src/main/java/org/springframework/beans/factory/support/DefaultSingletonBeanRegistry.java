@@ -104,9 +104,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	private final Map<String, Set<String>> containedBeanMap = new ConcurrentHashMap<>(16);
 
 	/** Map between dependent bean names: bean name to Set of dependent bean names. */
+	// beanName:Set<String>
 	private final Map<String, Set<String>> dependentBeanMap = new ConcurrentHashMap<>(64);
 
 	/** Map between depending bean names: bean name to Set of bean names for the bean's dependencies. */
+	// beanName:Ser<String>
 	private final Map<String, Set<String>> dependenciesForBeanMap = new ConcurrentHashMap<>(64);
 
 
@@ -238,7 +240,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				try {
 					// singletonFactory是外面传进来的lambda表达式,执行lambda表达式
 					// 创建单例bean
-					singletonObject = singletonFactory.getObject();
+					singletonObject = singletonFactory.getObject();  // createBean()
 					newSingleton = true;
 				}
 				catch (IllegalStateException ex) {

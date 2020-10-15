@@ -63,14 +63,17 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
-		// 再执行这个构造方法之前，会先执行父类的构造方法，会初始化一个beanFactory = new DefaultListableBeanFactory()
+		// 在执行这个构造方法之前，会先执行父类的构造方法，会初始化一个beanFactory = new DefaultListableBeanFactory()
 
-		// 生成5个原始的beanDefinition
-		// 后面会生成对应的bean，然后做特定的事情
+		// 生成并注册5个BeanDefinition
+		// 1.ConfigurationClassPostProcessor
+		// 2.AutowiredAnnotationBeanPostProcessor
+		// 3.CommonAnnotationBeanPostProcessor
+		// 4.EventListenerMethodProcessor
+		// 5.DefaultEventListenerFactory
 		this.reader = new AnnotatedBeanDefinitionReader(this);
-		// AnnotatedBeanDefinitionReader负责将某个类注册为beanDefinition
-		// reader.register(AppConfig.class);
 
+		// 注册默认的includeFilter
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -91,16 +94,16 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
-		// 初始化AnnotatedBeanDefinitionReader 和 ClassPathBeanDefinitionScanner
-		// 实际上reader和scanner二者用其一就好了，两者都是在Spring启动之处注册BeanDefinition
-		// 比如当前这个类，调用register方法实际上就是利用的reader去注册一个componentClasses对应的beanDefinition
-		// 而我们可以另外一个构造方法AnnotationConfigApplicationContext(String... basePackages),这个构造方法里使用的是scanner去扫描包路径得到BeanDefinition
+		// 1. 创建BeanFactory
+		// 2. 生成AnnotatedBeanDefinitionReader
+		// 3. 生成ClassPathBeanDefinitionScanner
 		this();
-		// 把AppConfig类注册为一个AnnotatedGenericBeanDefinition到reader中
+
+		// 利用reader把componentClasses注册为一个BeanDefinition
 		register(componentClasses);
 
-		// 在Spring启动到这里时，Spring中已经存在了一些BeanDefinition了，注意，不是Bean
-		// 刷新我们可以理解为，去解析这个BeanDefinition，因为这里的每个BeanDefinition都代表不同的意义，所做的事情也不同
+		// 调用AbstractApplicationContext的refresh()方法，模板模式，会启动ApplicationContext
+		// 为什么叫refresh，而不叫start?
 		refresh();
 	}
 

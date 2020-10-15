@@ -91,7 +91,7 @@ public class AnnotatedBeanDefinitionReader {
 		this.registry = registry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
 
-		// 构造Reader时就注册了一些Processor
+		// 生成并注册5个BeanDefinition
 		// 1.ConfigurationClassPostProcessor
 		// 2.AutowiredAnnotationBeanPostProcessor
 		// 3.CommonAnnotationBeanPostProcessor
@@ -278,12 +278,14 @@ public class AnnotatedBeanDefinitionReader {
 
 		// 设置supplier、scope属性，以及得到beanName
 		abd.setInstanceSupplier(supplier);
+		// @Scope注解的元数据信息
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 
 		// 获取Lazy、Primary、DependsOn、Role、Description注解信息并设置给abd
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				if (Primary.class == qualifier) {
@@ -306,6 +308,7 @@ public class AnnotatedBeanDefinitionReader {
 
 		// BeanDefinition中是没有beanName的，BeanDefinitionHolder中持有了BeanDefinition,beanName,alias
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+
 		// 解析Scope中的ProxyMode属性，默认为no，不生成代理对象
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 
@@ -321,6 +324,7 @@ public class AnnotatedBeanDefinitionReader {
 	private static Environment getOrCreateEnvironment(BeanDefinitionRegistry registry) {
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 		if (registry instanceof EnvironmentCapable) {
+			// 会调用AbstractApplicationContext的getEnvironment方法，在这个方法中会去创建Environment
 			return ((EnvironmentCapable) registry).getEnvironment();
 		}
 		return new StandardEnvironment();

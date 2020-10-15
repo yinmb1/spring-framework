@@ -117,7 +117,7 @@ public interface ConfigurableApplicationContext extends ApplicationContext, Life
 	 * @param environment the new environment
 	 * @since 3.1
 	 */
-	void setEnvironment(ConfigurableEnvironment environment);
+	void setEnvironment(ConfigurableEnvironment environment); //
 
 	/**
 	 * Return the {@code Environment} for this application context in configurable

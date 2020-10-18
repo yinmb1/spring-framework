@@ -249,7 +249,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
-		Object sharedInstance = getSingleton(beanName);
+		Object sharedInstance = getSingleton(beanName);  // Map<>
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -322,7 +322,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						registerDependentBean(dep, beanName);
 						try {
 							// 先去生成所依赖的bean
-							getBean(dep);
+							getBean(dep); //  getBean("xxx")
 						}
 						catch (NoSuchBeanDefinitionException ex) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
@@ -1571,7 +1571,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// 获取BeanDefinition中所指定的beanClass属性的值，beanClass属性的类型为Object，可以指定为某个类名
-		String className = mbd.getBeanClassName();
+		String className = mbd.getBeanClassName(); // 字符串  #{xxx}
 		if (className != null) {
 			// className可以有SpEL,所以需要解析
 			Object evaluated = evaluateBeanDefinitionString(className, mbd);

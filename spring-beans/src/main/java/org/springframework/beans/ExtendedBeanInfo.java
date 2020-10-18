@@ -143,6 +143,10 @@ class ExtendedBeanInfo implements BeanInfo {
 		return matches;
 	}
 
+	// 什么样的方法才是set方法
+	// 1. 方法名是setXXX
+	// 2. 并且，是public的
+	// 3. 并且，返回的类型不是void，或者 如果是void的
 	public static boolean isCandidateWriteMethod(Method method) {
 		String methodName = method.getName();
 		int nParams = method.getParameterCount();

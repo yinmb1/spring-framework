@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Select;
 public interface UserMapper {
 
 
-  @Select("select '${profile}'")
+  @Select("select 'test'")
   String selectById();
 
 }

@@ -1599,7 +1599,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				if (Object.class != pd.getPropertyType()) {
 					// set方法中的参数信息
 					MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
+
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
+					// 当前Bean是否实现了PriorityOrdered
 					boolean eager = !(bw.getWrappedInstance() instanceof PriorityOrdered);
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
 
@@ -1636,7 +1638,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected String[] unsatisfiedNonSimpleProperties(AbstractBeanDefinition mbd, BeanWrapper bw) {
 		Set<String> result = new TreeSet<>();
-		PropertyValues pvs = mbd.getPropertyValues(); // 在BeanDefinition中添加的属性和值，
+		PropertyValues pvs = mbd.getPropertyValues(); // 在BeanDefinition中添加的属性和值
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
 
 		// 对类里所有的属性进行过滤,确定哪些属性是需要进行自动装配的
@@ -1807,6 +1809,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				boolean convertible = bw.isWritableProperty(propertyName) &&
 						!PropertyAccessorUtils.isNestedOrIndexedProperty(propertyName);
 				if (convertible) {
+					// 这里会判断解析出来的值是否和所要设置的属性类型是否匹配，如果不匹配会进行类型转化
 					convertedValue = convertForProperty(resolvedValue, propertyName, bw, converter);
 				}
 				// Possibly store converted value in merged bean definition,

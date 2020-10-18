@@ -1,33 +1,11 @@
 package com.luban;
 
 
-import com.luban.service.OrderService;
-import com.luban.service.UserService;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
-import org.mybatis.spring.SqlSessionFactoryBean;
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.PayloadApplicationEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.transaction.PlatformTransactionManager;
-
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.util.Properties;
 
 @ComponentScan("com.luban")
 public class AppConfig {
 
-	@Bean
-	public UserService userService1() {
-		return new UserService();
-	}
 
 	//	@Bean
 //	public MessageSource messageSource() {

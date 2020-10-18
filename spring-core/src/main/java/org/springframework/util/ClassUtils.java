@@ -190,7 +190,7 @@ public abstract class ClassUtils {
 
 		ClassLoader cl = null;
 		try {
-			cl = Thread.currentThread().getContextClassLoader();
+			cl = Thread.currentThread().getContextClassLoader(); // APpClassLoader
 		}
 		catch (Throwable ex) {
 			// Cannot access thread context ClassLoader - falling back...
@@ -198,10 +198,10 @@ public abstract class ClassUtils {
 		if (cl == null) {
 			// No thread context class loader -> use class loader of this class.
 			cl = ClassUtils.class.getClassLoader();
-			if (cl == null) {
+			if (cl == null) {  // Bootstrap
 				// getClassLoader() returning null indicates the bootstrap ClassLoader
 				try {
-					cl = ClassLoader.getSystemClassLoader();
+					cl = ClassLoader.getSystemClassLoader(); // app
 				}
 				catch (Throwable ex) {
 					// Cannot access system ClassLoader - oh well, maybe the caller can live with null...
@@ -257,12 +257,13 @@ public abstract class ClassUtils {
 			return clazz;
 		}
 
+		// com.lubam.UserSerivce[]    Arrary
 		// "java.lang.String[]" style arrays
 		// 需要加载的如果是"java.lang.String[]",那么则返回"[Ljava.lang.String;"
 		if (name.endsWith(ARRAY_SUFFIX)) {
 			String elementClassName = name.substring(0, name.length() - ARRAY_SUFFIX.length());
 			Class<?> elementClass = forName(elementClassName, classLoader);
-			return Array.newInstance(elementClass, 0).getClass();
+			return Array.newInstance(elementClass, 0).getClass();  // Array
 		}
 
 		// "[Ljava.lang.String;" style arrays

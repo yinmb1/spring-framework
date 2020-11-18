@@ -6,4 +6,5 @@ package com.luban.entity;
  */
 public class Test
 {
+	private String name;
 }

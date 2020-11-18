@@ -10,6 +10,7 @@ public class Test {
 
 		UserService userService = applicationContext.getBean("userService", UserService.class);//beanDefinition  单例的，原型
 		System.out.println(userService);
+		userService.equals(null);
 
 
 	}

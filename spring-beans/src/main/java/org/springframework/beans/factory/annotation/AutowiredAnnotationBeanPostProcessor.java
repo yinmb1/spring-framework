@@ -531,6 +531,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		return metadata;
 	}
 
+	/**
+	 * 找出该类的注入点
+	 * @param clazz
+	 * @return
+	 */
 	private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
 
 		// 判断是不是候选者类，比如说类名，如果是以"java."开头的则不是候选者类
